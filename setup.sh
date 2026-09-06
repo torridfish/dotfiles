@@ -22,7 +22,7 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 
 NON_INTERACTIVE=false
 UNSTOW=false
@@ -137,7 +137,10 @@ backup_conflicts() {
     while IFS= read -r rel; do
         target="$HOME/$rel"
         if [[ -e "$target" || -L "$target" ]]; then
-            if [[ -L "$target" && "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]]; then
+            # Resolve the full path: the final component may be a real file
+            # reached THROUGH a stowed directory symlink (e.g. yazi plugins/),
+            # so checking -L on the last component alone is not enough.
+            if [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]]; then
                 continue  # already managed by us
             fi
             mkdir -p "$backup_root/$(dirname "$rel")"
