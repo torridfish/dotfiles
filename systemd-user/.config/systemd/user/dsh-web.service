@@ -1,0 +1,20 @@
+[Unit]
+Description=dsh web — DeepSeek Harness on 127.0.0.1:3080 (tailnet 入口靠 tailscale serve)
+# 掉了就重開，但別無限快速循環
+StartLimitIntervalSec=60
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=%h/Code
+# 走全域安裝的絕對路徑，不依賴 nvm 的 shell shim（systemd 讀不到 .zshrc）
+ExecStart=%h/.nvm/versions/node/v22.20.0/bin/dsh --profile web --port 3080 --trusted-host ser8.taild36d43.ts.net
+Environment=DSH_HOME=%h/.dsh
+# agent 自己要用的工具鏈（node/npm/git/…）得在 PATH 上
+Environment=PATH=%h/.nvm/versions/node/v22.20.0/bin:%h/.local/bin:/usr/local/bin:/usr/bin:/bin:/usr/local/sbin:/usr/sbin:/sbin
+# API key 不寫在 unit 裡：dsh 自己會讀 $DSH_HOME/.env（user-env layer）
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=default.target

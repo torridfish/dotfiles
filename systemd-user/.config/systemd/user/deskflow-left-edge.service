@@ -1,0 +1,17 @@
+[Unit]
+Description=Deskflow left monitor edge bridge
+Documentation=file:%h/.local/src/deskflow-left-edge/README.md
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/deskflow-left-edge
+Restart=on-failure
+RestartSec=2s
+PassEnvironment=DISPLAY XAUTHORITY WAYLAND_DISPLAY XDG_CURRENT_DESKTOP XDG_SESSION_TYPE
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=graphical-session.target
