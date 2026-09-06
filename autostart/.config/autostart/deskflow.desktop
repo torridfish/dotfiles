@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Exec=/usr/bin/deskflow
+Hidden=true
+NoDisplay=false
+X-GNOME-Autostart-enabled=true
+Name[en_US]=deskflow
+Name=deskflow
+Comment[en_US]=Share mouse and keyboard from other device.
+Comment=Share mouse and keyboard from other device.

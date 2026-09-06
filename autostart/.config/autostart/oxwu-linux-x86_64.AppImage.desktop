@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Version=1.0
+Name=oxwu-linux-x86_64.AppImage
+Comment=oxwu-linux-x86_64.AppImagestartup script
+Exec=/home/torridfish/Downloads/oxwu-linux-x86_64.AppImage --hidden
+StartupNotify=false
+Terminal=false
