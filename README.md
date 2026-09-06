@@ -9,18 +9,31 @@ Each top-level directory is a **stow package** that mirrors the target structure
 ```
 dotfiles/
 ├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode)
+├── autostart/    → ~/.config/autostart/*.desktop
 ├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
 ├── btop/         → ~/.config/btop/btop.conf
+├── cava/         → ~/.config/cava/config
+├── claude/       → ~/.claude/settings.json
+├── codex/        → ~/.codex/config.toml
+├── condarc/      → ~/.condarc
+├── deskflow/     → ~/.config/Deskflow/{Deskflow.conf,deskflow-server.conf}
 ├── fcitx5/       → ~/.config/fcitx5/{config,profile,conf/*.conf}
 ├── gh/           → ~/.config/gh/config.yml
 ├── git/          → ~/.config/git/{config,commit-template,ignore}
-├── pi/           → ~/.pi/agent/{prompts,extensions} (portable parts only)
+├── kitty/        → ~/.config/kitty/{kitty.conf,ssh.conf,current-theme.conf}
+├── pi/           → ~/.pi/agent/{settings.json,prompts,extensions}
+├── ssh/          → ~/.ssh/config
 ├── starship/     → ~/.config/starship.toml
+├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,dsh-web,dsh-web-proxy,hermes-gateway}.service
 ├── tmux/         → ~/.config/tmux/tmux.conf
 ├── vim/          → ~/.config/vim/vimrc
+├── yazi/         → ~/.config/yazi/{yazi.toml,keymap.toml,package.toml,init.lua,plugins/}
+├── zed/          → ~/.config/zed/{settings.json,keymap.json}
 ├── zsh/          → ~/.zshenv, ~/.zshrc
 └── setup.sh      → one-shot installer (installs stow, symlinks everything)
 ```
+
+Intentionally **not** tracked: GNOME desktop settings (dconf database, binary — dump/load with `dconf`), `~/.pi/agent/AGENTS.md` (global agent memory), `~/.claude.json` (mostly project state).
 
 **Note on granularity:** directories containing runtime artifacts (e.g. `gh/hosts.yml` with login tokens, `tmux/plugins/`, `btop/themes/`, fcitx5 caches) are **not** symlinked as a whole — only the actual config files are, so junk and secrets never end up in this repo.
 
@@ -45,6 +58,8 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 ./setup.sh --unstow           # unlink all packages
 ```
 
+`--no-folding` is used so that directories holding app-generated runtime files (Deskflow TLS certs, new autostart entries, ...) stay real directories — only explicitly tracked files become symlinks.
+
 ## Packages
 
 | Package | Contents |
@@ -55,7 +70,18 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
 | `gh` | GitHub CLI aliases & preferences |
 | `git` | Git settings, conventional commit template, global ignore |
-| `pi` | pi coding agent: `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `settings.json`/`models.json`/`auth.json` are machine-local — never stowed |
+| `pi` | pi coding agent: `settings.json`, `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `models.json`/`auth.json`/`AGENTS.md`/`secrets/` stay machine-local |
+| `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
+| `codex` | Codex CLI config: model, personality, MCP servers. `auth.json` stays machine-local |
+| `kitty` | Kitty terminal config + ssh kitten + current theme |
+| `yazi` | File manager config, keymap, init.lua and vendored plugins |
+| `zed` | Zed editor settings + keymap |
+| `cava` | Audio visualizer config |
+| `deskflow` | Deskflow (Synergy) GUI + server screen layout. `tls/` stays machine-local |
+| `ssh` | SSH client config (host aliases only — no keys, no known_hosts). Repo copy should be `chmod 600` |
+| `condarc` | conda channels/priority |
+| `systemd-user` | Custom user units: deskflow-left-edge, dsh-web, dsh-web-proxy, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
+| `autostart` | XDG autostart desktop entries (deskflow, fcitx5, oxwu, syncthing) |
 | `starship` | Cross-shell prompt |
 | `tmux` | Terminal multiplexer config (TPM plugins auto-bootstrap on first run) |
 | `vim` | Vim 9.1+ with XDG-native vimrc |
