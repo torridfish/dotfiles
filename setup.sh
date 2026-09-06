@@ -177,21 +177,24 @@ main() {
     fi
     print_info "Packages: ${packages[*]}"
 
-    local flag="--restow"
+    local flag=(--restow --no-folding)
     local action="Stowing"
     if $UNSTOW; then
-        flag="-D"
+        flag=(-D --no-folding)
         action="Unstowing"
     fi
 
+    # --no-folding: never fold package dirs into a single symlink, so app-
+    # generated runtime files (Deskflow tls/, new autostart entries, ...)
+    # stay as real files in $HOME instead of landing inside the repo.
     for pkg in "${packages[@]}"; do
         if $UNSTOW; then
             print_info "$action $pkg..."
-            stow -d "$SCRIPT_DIR" -t "$HOME" -D "$pkg"
+            stow -d "$SCRIPT_DIR" -t "$HOME" "${flag[@]}" "$pkg"
         else
             backup_conflicts "$pkg"
             print_info "$action $pkg..."
-            stow -d "$SCRIPT_DIR" -t "$HOME" --restow "$pkg"
+            stow -d "$SCRIPT_DIR" -t "$HOME" "${flag[@]}" "$pkg"
         fi
         print_success "$pkg done"
     done
