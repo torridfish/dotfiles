@@ -56,7 +56,7 @@ brew bundle --file=~/Code/dotfiles/Brewfile   # tools first (kitty/zed via cask)
 ./setup.sh -y
 ```
 
-CLI agents (pi, claude, codex, ...) install via their own channels. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
+CLI agents (pi, claude, codex, ...) install via their own channels. macOS's built-in zsh (5.9) is used as-is — no `brew zsh` or `chsh` needed. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
 
 ## Manual stow usage
 

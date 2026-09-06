@@ -8,7 +8,8 @@ brew "vim"
 brew "btop"
 brew "yazi"
 brew "cava"
-brew "zsh" # macOS ships an ancient /bin/zsh; chsh -s "$(brew --prefix)/bin/zsh" after install
+
+# zsh: macOS's built-in zsh (5.9) is current — no brew zsh, no chsh needed
 
 # GUI apps
 cask "kitty"
