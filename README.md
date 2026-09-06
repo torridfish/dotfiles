@@ -33,7 +33,7 @@ dotfiles/
 └── setup.sh      → one-shot installer (installs stow, symlinks everything)
 ```
 
-Intentionally **not** tracked: GNOME desktop settings (dconf database, binary — dump/load with `dconf`), `~/.pi/agent/AGENTS.md` (global agent memory), `~/.claude.json` (mostly project state).
+Intentionally **not** tracked: GNOME desktop settings (dconf database, binary — dump/load with `dconf`), `~/.claude.json` (mostly project state).
 
 **Note on granularity:** directories containing runtime artifacts (e.g. `gh/hosts.yml` with login tokens, `tmux/plugins/`, `btop/themes/`, fcitx5 caches) are **not** symlinked as a whole — only the actual config files are, so junk and secrets never end up in this repo.
 
@@ -70,7 +70,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
 | `gh` | GitHub CLI aliases & preferences |
 | `git` | Git settings, conventional commit template, global ignore |
-| `pi` | pi coding agent: `settings.json`, `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `models.json`/`auth.json`/`AGENTS.md`/`secrets/` stay machine-local |
+| `pi` | pi coding agent: global `AGENTS.md`, `settings.json`, `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `models.json`/`auth.json`/`secrets/` stay machine-local |
 | `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
 | `codex` | Codex CLI config: model, personality, MCP servers. `auth.json` stays machine-local |
 | `kitty` | Kitty terminal config + ssh kitten + current theme |
