@@ -86,11 +86,14 @@ install_package() {
     esac
 }
 
+# Packages that only make sense on Linux; skipped automatically on macOS.
+LINUX_ONLY_PACKAGES=(autostart deskflow fcitx5 systemd-user)
+
 # =============================================================================
 # Ensure GNU Stow is available
 # =============================================================================
 ensure_stow() {
-    if command -v stow &> /dev/null; then
+    if command -v stow >/dev/null 2>&1; then
         print_info "GNU Stow $(stow --version | grep -o '[0-9.]*$') found"
         return 0
     fi
@@ -139,7 +142,7 @@ backup_conflicts() {
         if [[ -e "$target" || -L "$target" ]]; then
             # Resolve the full path: the final component may be a real file
             # reached THROUGH a stowed directory symlink (e.g. yazi plugins/),
-            # so checking -L on the last component alone is not enough.
+            # so a plain -L check on the last component is not enough.
             if [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]]; then
                 continue  # already managed by us
             fi
@@ -158,7 +161,7 @@ backup_conflicts() {
 # =============================================================================
 bootstrap_tpm() {
     local tpm_dir="$HOME/.config/tmux/plugins/tpm"
-    if [[ ! -e "$tpm_dir" ]] && command -v git &> /dev/null; then
+    if [[ ! -e "$tpm_dir" ]] && command -v git >/dev/null 2>&1; then
         print_info "Bootstrapping TPM..."
         git clone --depth 1 https://github.com/tmux-plugins/tpm "$tpm_dir"
         "$tpm_dir/bin/install_plugins.sh" || true
@@ -179,6 +182,25 @@ main() {
         exit 1
     fi
     print_info "Packages: ${packages[*]}"
+
+    # Skip Linux-only packages on non-Linux hosts (macOS)
+    if [[ "$OS" == "macos" ]]; then
+        local -a selected=()
+        local pkg
+        for pkg in "${packages[@]}"; do
+            if [[ " ${LINUX_ONLY_PACKAGES[*]} " == *" $pkg "* ]]; then
+                print_info "Skipping $pkg (Linux-only)"
+                continue
+            fi
+            selected+=("$pkg")
+        done
+        if [[ ${#selected[@]} -eq 0 ]]; then
+            print_error "No packages left to stow on $OS"
+            exit 1
+        fi
+        packages=("${selected[@]}")
+        print_info "Packages (after OS filter): ${packages[*]}"
+    fi
 
     local flag=(--restow --no-folding)
     local action="Stowing"
