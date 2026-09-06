@@ -47,6 +47,17 @@ cd ~/Code/dotfiles
 
 The script will install stow if missing, back up any conflicting real files to `~/.dotfiles-backup/`, and symlink every package into `$HOME`.
 
+## macOS
+
+Linux-only packages (`autostart`, `deskflow`, `fcitx5`, `systemd-user`) are skipped automatically:
+
+```bash
+brew bundle --file=~/Code/dotfiles/Brewfile   # tools first (kitty/zed via cask)
+./setup.sh -y
+```
+
+CLI agents (pi, claude, codex, ...) install via their own channels. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
+
 ## Manual stow usage
 
 From the repo root:
@@ -105,6 +116,6 @@ Secrets and per-machine overrides are intentionally not tracked (see `.gitignore
 | `git` `gh` `starship` `tmux` `vim` `btop` | Cross-platform — work on any Unix (Linux, macOS) that has the tool and GNU Stow |
 | `fcitx5` | Linux only (X11/Wayland input method framework) |
 | `zsh` `bash` | Contain machine-specific PATH entries (`texlive/.../x86_64-linux`, a hardcoded LM Studio path, `/usr/local/go/bin`). Unknown paths are harmless no-ops elsewhere, but only meaningful on the author's Linux machines |
-| `setup.sh` | Installer branches exist for apt/dnf/yum/pacman/apk/brew, but only apt has actually been tested |
+| `setup.sh` | Installer branches exist for apt/dnf/yum/pacman/apk/brew; apt is the tested Linux path, macOS skips Linux-only packages and bootstraps tools via `Brewfile` |
 
 macOS notes: the zsh configs will load, but the Linux-specific PATH entries are no-ops — prune them or move machine-specific bits into a gitignored `*.local` file.
