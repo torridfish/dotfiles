@@ -42,15 +42,20 @@ cargo install mermaid-rs-cli resvg
 ```json
 {
   "theme": "dark",          // default | dark | forest | neutral
-  "zoom": 2,                // resvg 縮放倍率（1-8）
+  "zoom": 2,                // resvg 縮放倍率（1-8），影響 PNG 解析度
   "maxWidthCells": 9999,    // 圖片最大寬度（終端格數）；預設極大值 = 自適應終端寬度
   "hideCode": true,         // 折疊已渲染的 mermaid code fence
+  "center": true,           // 圖片在 transcript 中水平置中
+  "scale": 1,               // 顯示大小倍率（0.2-3，1 = 原尺寸），縮放後寬仍不超過終端寬
   "mmrsPath": null,         // 覆寫 mmrs 路徑（選填）
   "resvgPath": null,        // 覆寫 resvg 路徑（選填）
   "fontPath": null,         // 覆寫字型路徑（選填）
   "cacheDir": "~/.cache/pi-mermaid"
 }
 ```
+
+`center` / `scale` 在每次 transcript 渲染時讀取，改完 config.json 後 reload
+extension（或重開 pi）即對所有已渲染的圖生效，不需重新 render。
 
 環境變數 `PI_MERMAID_MMRS` / `PI_MERMAID_RESVG` 亦可覆寫二進位路徑。
 

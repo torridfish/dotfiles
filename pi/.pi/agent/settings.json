@@ -8,5 +8,6 @@
     "mermaid": "off"
   },
   "defaultThinkingLevel": "medium",
-  "blockImages": true
+  "blockImages": true,
+  "tuiMode": "fullscreen"
 }

@@ -84,6 +84,10 @@ interface MermaidMmrsConfig {
 	maxWidthCells: number;
 	/** Collapse rendered ```mermaid fences in the assistant message. */
 	hideCode: boolean;
+	/** Center diagrams horizontally in the transcript. */
+	center: boolean;
+	/** Display size multiplier relative to natural/fit size (0.2–3, 1 = natural). */
+	scale: number;
 	mmrsPath?: string;
 	resvgPath?: string;
 	fontPath?: string;
@@ -95,6 +99,8 @@ const DEFAULTS: MermaidMmrsConfig = {
 	zoom: 2,
 	maxWidthCells: 9999, // auto-fit: Image caps at available width - 2 cells
 	hideCode: true,
+	center: true,
+	scale: 1,
 	cacheDir: join(homedir(), ".cache", "pi-mermaid"),
 };
 
@@ -145,6 +151,10 @@ function loadConfig(): void {
 			config.maxWidthCells = Math.floor(raw.maxWidthCells);
 		}
 		if (typeof raw.hideCode === "boolean") config.hideCode = raw.hideCode;
+		if (typeof raw.center === "boolean") config.center = raw.center;
+		if (typeof raw.scale === "number" && raw.scale >= 0.2 && raw.scale <= 3) {
+			config.scale = raw.scale;
+		}
 		if (typeof raw.mmrsPath === "string" && raw.mmrsPath) config.mmrsPath = raw.mmrsPath;
 		if (typeof raw.resvgPath === "string" && raw.resvgPath) config.resvgPath = raw.resvgPath;
 		if (typeof raw.fontPath === "string" && raw.fontPath) config.fontPath = raw.fontPath;
@@ -555,6 +565,18 @@ function placeholderGrid(columns: number, rows: number, imageId: number): string
 	);
 }
 
+// --- centering ---------------------------------------------------------------
+
+/** 在每個含圖的行（kitty APC / iTerm2 OSC / placeholder 字元）前加上置中用的空白。 */
+function centerImageLines(lines: string[], width: number, columns: number): string[] {
+	const pad = Math.max(0, Math.floor((width - columns) / 2));
+	if (pad === 0) return lines;
+	const padStr = " ".repeat(pad);
+	return lines.map((line) =>
+		line.includes("\x1b_G") || line.includes("\x1b]1337;") || line.includes("\u10EEEE") ? padStr + line : line,
+	);
+}
+
 // --- capability detection ---------------------------------------------------
 
 type DisplayMode = "kitty-placeholder" | "image" | "text";
@@ -660,15 +682,17 @@ function emitPlaceholder(data: RenderOk, availableWidth: number): string[] {
 	}
 
 	// Fit the diagram into the available width, aspect preserved, rows capped.
+	// config.scale 再乘上顯示倍率（可 >1 放大，但寬不超過可用寬度）。
 	const cell = getCellDimensions();
 	const maxColumns = Math.max(8, Math.min(config.maxWidthCells, Math.max(8, availableWidth)));
-	const scale = Math.min(
+	const fit = Math.min(
 		(maxColumns * cell.widthPx) / widthPx,
 		(MAX_PLACEHOLDER_ROWS * cell.heightPx) / heightPx,
 		1,
 	);
-	const columns = Math.max(1, Math.ceil((widthPx * scale) / cell.widthPx));
-	const rows = Math.max(1, Math.ceil((heightPx * scale) / cell.heightPx));
+	const displayScale = fit * config.scale;
+	const columns = Math.max(1, Math.min(maxColumns, Math.ceil((widthPx * displayScale) / cell.widthPx)));
+	const rows = Math.max(1, Math.ceil((heightPx * displayScale) / cell.heightPx));
 
 	const geometry = `${columns}:${rows}`;
 	if (placementGeom.get(id) !== geometry) {
@@ -676,7 +700,8 @@ function emitPlaceholder(data: RenderOk, availableWidth: number): string[] {
 		process.stdout.write(kittyPlacement(id, columns, rows, inTmux));
 		placementGeom.set(id, geometry);
 	}
-	return placeholderGrid(columns, rows, id);
+	const grid = placeholderGrid(columns, rows, id);
+	return config.center ? centerImageLines(grid, availableWidth, columns) : grid;
 }
 
 /** Delete all uploaded kitty images and reset placeholder runtime state. */
@@ -737,21 +762,36 @@ export default function (pi: ExtensionAPI) {
 				// large cap (e.g. 9999 = auto-fit) stretches every diagram to the
 				// full transcript width. Cap at the diagram's natural SVG width so
 				// it renders at original size, still bounded by the config cap.
+				// config.scale 再乘上顯示倍率（Image 會填滿 maxWidthCells，縮小它即可縮放）。
 				const cell = getCellDimensions();
 				const naturalColumns = data.widthPx
 					? Math.max(10, Math.ceil(data.widthPx / cell.widthPx))
 					: config.maxWidthCells;
-				box.addChild(
-					new Image(
-						pngBase64,
-						"image/png",
-						{ fallbackColor: (s) => theme.fg("toolOutput", s) },
-						{
-							maxWidthCells: Math.min(config.maxWidthCells, naturalColumns),
-							filename: path,
-						},
-					),
+				const baseColumns = Math.min(config.maxWidthCells, naturalColumns);
+				const displayColumns = Math.max(10, Math.floor(baseColumns * config.scale));
+				const image = new Image(
+					pngBase64,
+					"image/png",
+					{ fallbackColor: (s) => theme.fg("toolOutput", s) },
+					{
+						maxWidthCells: displayColumns,
+						filename: path,
+					},
 				);
+				if (config.center) {
+					// Image 實際渲染寬 = min(maxWidthCells, width - 2)，據此置中
+					box.addChild({
+						render: (width: number) =>
+							centerImageLines(
+								image.render(width),
+								width,
+								Math.min(displayColumns, Math.max(1, width - 2)),
+							),
+						invalidate: () => image.invalidate(),
+					});
+				} else {
+					box.addChild(image);
+				}
 			}
 		}
 		if (options.expanded) {
