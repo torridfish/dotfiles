@@ -1,19 +1,22 @@
-# image-zoom
+# img
 
-放大檢視 pi 顯示過的圖片（kitty graphics protocol）。
+快速瀏覽 pi 顯示過的圖片（kitty graphics protocol）——放大檢視 + session 內圖片切換。
 
 ## 使用
 
-- **Alt+Z** 或 **/zoom**：進入放大檢視，從 session 中最新的一張圖開始
+- **Alt+Z** 或 **/img**：進入檢視，從 session 中最新的一張圖開始
 - 檢視中：
   - **←/→** 在 session 收集到的圖片之間切換（新 ↔ 舊）
   - **+ / −**（`=` 同 `+`）調整放大比例（0.4–1.0，預設 0.8，記憶到下次）
   - **Esc**（或 `q`）離開；離開後 transcript 停留在目前那張圖的位置
     （不會跳回 bottom，也不會還原進入前的捲動位置）
 
+平時圖片常駐在對話中（mermaid 圖的置中與顯示大小由 mermaid-mmrs 的
+`config.json` 控制），`/img` 是瀏覽與臨時放大用的。
+
 ## 兩種檢視模式
 
-### inline zoom（優先，fullscreen TUI 模式）
+### inline 檢視（優先，fullscreen TUI 模式）
 
 不用 overlay 蓋住對話，而是：
 
@@ -30,7 +33,7 @@
 
 ### overlay 模式（fallback）
 
-以下情況退回原本的 overlay 檢視（`ctx.ui.custom` overlay，置中放大）：
+以下情況退回 overlay 檢視（`ctx.ui.custom` overlay，置中放大）：
 
 - regular TUI 模式且圖片不在目前畫面內（regular 模式 transcript 直接渲染進
   terminal scrollback、無法程式化捲動；且 diff renderer 對 viewport 之上的
@@ -39,9 +42,9 @@
 
 ## 放大規則
 
-圖片置中，取終端機寬／高**較小的那一邊**盡量填滿、維持原始比例
+圖片置中，以「填滿可用寬高」為基準乘上縮放比例、維持原始比例
 （依 kitty 的 cell 寬高比換算 rows/columns，與 pi-tui 內建演算法一致）。
-inline 模式會保留一行 hint（`←/→ 切換 · Esc 關閉`）在圖片下方。
+inline 模式會保留一行 hint（`←/→ 切換 · +/− 縮放 · Esc 關閉`）在圖片下方。
 
 ## 背景圖片隱藏機制
 
@@ -65,19 +68,19 @@ kitty image id；循環切換時先送 `deleteKittyImage(id)` 再重傳，確保
   事件攔截圖片 base64，不影響 pi 原生渲染。
 - `session_start` 時從 session 歷史回填（掃 branch 的 toolResult / user message
   中的 image blocks，以及 **mermaid-mmrs 的 custom entry** `data.pngBase64`），
-  每次 `/zoom` 時也會重掃一次，所以 session 途中才 render 的 mermaid 圖也 zoom 得到。
+  每次 `/img` 時也會重掃一次，所以 session 途中才 render 的 mermaid 圖也瀏覽得到。
 - 同一張圖以 mime + 大小 + 開頭內容去重，不會重複出現在循環清單。
 - 檢視中的按鍵用 `ctx.ui.onTerminalInput` 攔截（modal，吃掉所有鍵；
   Ctrl+C / Ctrl+D 仍通過維持 pi 原生行為）。
-- 換 session（session_start / session_shutdown）時 inline zoom 會強制還原。
+- 換 session（session_start / session_shutdown）時 inline 檢視會強制還原。
 
 ## 限制
 
 - 需要終端機支援 kitty graphics protocol（settings: `terminal.images: "kitty"`）。
-- inline zoom 的定位依賴 pi 內部結構（`tui.children[0]` = documentContainer、
+- inline 檢視的定位依賴 pi 內部結構（`tui.children[0]` = documentContainer、
   chatContainer 為其最後一個 child、fullscreen 的 ScrollView 在 layoutRoot 底下），
   pi 改版時可能需要跟著調整；結構不合時自動退回 overlay 模式。
-- regular 模式下 inline zoom 只對「畫面內」（transcript 尾端）的圖生效，
+- regular 模式下 inline 檢視只對「畫面內」（transcript 尾端）的圖生效，
   舊圖會退回 overlay。
 - Session 圖片 ring buffer 上限 30 張 / 300MB，避免記憶體失控。
 - 快捷鍵寫死為 `alt+z`（pi 原生未使用）；要換鍵改 `index.ts` 最後的

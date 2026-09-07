@@ -1,8 +1,8 @@
 /**
- * image-zoom — 放大檢視 pi 顯示過的圖片
+ * img — 快速瀏覽 pi 顯示過的圖片（放大檢視 + session 內圖片切換）
  *
  * 用法：
- * - Alt+Z 或 /zoom：進入放大檢視，←/→ 在 session 收集到的圖片間循環，Esc 離開
+ * - Alt+Z 或 /img：進入檢視，←/→ 在 session 收集到的圖片間循環，Esc 離開
  *
  * fullscreen TUI 模式（inline zoom）：
  * - 不用 overlay，而是把 transcript 中該圖所屬的訊息元件「原位置替換」成
@@ -596,7 +596,7 @@ async function openViewer(
 
 async function zoomHandler(ctx: ExtensionContext): Promise<void> {
 	if (ctx.mode !== "tui") {
-		ctx.ui.notify("image-zoom 只在互動模式可用", "warning");
+		ctx.ui.notify("img 只在互動模式可用", "warning");
 		return;
 	}
 	const caps = getCapabilities();
@@ -680,13 +680,13 @@ export default function (pi: ExtensionAPI) {
 		resetImages();
 	});
 
-	pi.registerCommand("zoom", {
-		description: "放大檢視 session 中的圖片（←/→ 切換、Esc 離開）",
+	pi.registerCommand("img", {
+		description: "快速瀏覽 session 中的圖片（←/→ 切換、+/− 縮放、Esc 離開）",
 		handler: async (_args, ctx) => zoomHandler(ctx),
 	});
 
 	pi.registerShortcut("alt+z", {
-		description: "Zoom images from this session",
+		description: "Browse images from this session",
 		handler: async (ctx) => zoomHandler(ctx),
 	});
 }
