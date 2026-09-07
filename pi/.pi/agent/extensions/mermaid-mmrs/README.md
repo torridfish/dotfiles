@@ -4,6 +4,14 @@ pi extension:用 [mmrs](https://github.com/cmwright/mermaid-rs)（mermaid-rs-cli
 
 取代 pi 內建的 grok-mermaid Unicode 文字圖渲染（需在 `~/.pi/agent/settings.json` 設定 `"markdown": { "mermaid": "off" }`）。
 
+## tmux 內顯示
+
+pi-tui 在 tmux 底下會關閉內建 inline image，本 extension 內建了替代方案：在 tmux 裡（且外層是 kitty/ghostty/wezterm、`allow-passthrough on`）改用 **kitty graphics Unicode placeholders**——圖片以 `a=t` 上傳一次、`a=p,U=1` virtual placement 定義範圍，`U+10EEE` placeholder 格讓圖成為「網格駐留的文字」，tmux 的滾動/分割/裁切全部正確。序列以 tmux DCS passthrough 包裝。機制 vendored 自 [safurrier/pi-tmux-images](https://github.com/safurrier/pi-tmux-images)（MIT）。
+
+- `~/.tmux.conf` 需要：`set -g allow-passthrough on`
+- tmux 內圖高上限 50 行（`MAX_PLACEHOLDER_ROWS`）
+- 不符合條件時自動退回 caption-only 文字顯示
+
 ## 行為
 
 - **全自動**：任何 assistant 訊息只要含 ` ```mermaid ` 區塊就會在 message_end 自動渲染，agent 不需要呼叫任何工具

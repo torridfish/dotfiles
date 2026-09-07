@@ -81,10 +81,21 @@ function resetImages(): void {
 
 /**
  * 從 session 歷史回填圖片（extension 載入/reload 前就顯示過的圖也能 zoom）。
- * 掃描目前 branch 的 toolResult 與 user message 中的 image blocks。
+ * 掃描目前 branch 的：
+ * - toolResult 與 user message 中的 image blocks
+ * - mermaid-mmrs 的 custom entry（data.pngBase64，mermaid 渲染結果）
  */
 function backfillFromSession(ctx: ExtensionContext): void {
 	for (const entry of ctx.sessionManager.getBranch()) {
+		const custom = entry as {
+			type?: string;
+			customType?: string;
+			data?: { pngBase64?: string };
+		};
+		if (custom.type === "custom" && custom.customType === "mermaid-mmrs" && custom.data?.pngBase64) {
+			captureImage(custom.data.pngBase64, "image/png");
+			continue;
+		}
 		if (entry.type !== "message") continue;
 		const msg = entry.message as {
 			role?: string;
@@ -277,6 +288,13 @@ async function zoomHandler(ctx: ExtensionContext): Promise<void> {
 	if (!caps.images) {
 		ctx.ui.notify("此終端機不支援圖片顯示（kitty protocol）", "error");
 		return;
+	}
+	// 重新掃一次 session 歷史，涵蓋 session_start 之後才出現的圖
+	//（例如 session 途中 mermaid-mmrs render 出的圖）
+	try {
+		backfillFromSession(ctx);
+	} catch {
+		// 掃描失敗就用目前已收集的圖
 	}
 	if (sessionImages.length === 0) {
 		ctx.ui.notify("這個 session 還沒有出現過圖片", "info");

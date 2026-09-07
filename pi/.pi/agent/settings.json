@@ -2,18 +2,11 @@
   "lastChangelogVersion": "0.85.1",
   "defaultProvider": "vllm",
   "defaultModel": "GLM-5.3-Flash-EXL3",
-  "packages": [
-    "npm:pi-mcp-adapter",
-    "npm:pi-web-access",
-    "npm:pi-tool-display",
-    "npm:pi-subdir-context",
-    "npm:@juicesharp/rpiv-ask-user-question"
-  ],
+  "packages": [],
   "theme": "dark",
   "markdown": {
     "mermaid": "off"
   },
   "defaultThinkingLevel": "medium",
-  "hideThinkingBlock": false,
-  "tuiMode": "regular"
+  "blockImages": true
 }

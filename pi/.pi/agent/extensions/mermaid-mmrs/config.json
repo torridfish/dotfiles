@@ -1,5 +1,5 @@
 {
-  "theme": "dark",
+  "theme": "default",
   "zoom": 2,
   "maxWidthCells": 9999,
   "hideCode": true,
