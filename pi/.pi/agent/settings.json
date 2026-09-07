@@ -10,6 +10,9 @@
     "npm:@juicesharp/rpiv-ask-user-question"
   ],
   "theme": "dark",
+  "markdown": {
+    "mermaid": "off"
+  },
   "defaultThinkingLevel": "medium",
   "hideThinkingBlock": false,
   "tuiMode": "regular"

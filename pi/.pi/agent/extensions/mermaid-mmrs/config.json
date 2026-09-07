@@ -1,0 +1,7 @@
+{
+  "theme": "dark",
+  "zoom": 2,
+  "maxWidthCells": 9999,
+  "hideCode": true,
+  "cacheDir": "/home/torridfish/.cache/pi-mermaid"
+}

@@ -1,5 +1,5 @@
 {
-  "name": "tok-speed-footer",
+  "name": "torrid-footer",
   "version": "1.0.0",
   "dependencies": {
     "tiktoken": "^1.0.20"

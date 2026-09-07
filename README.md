@@ -75,7 +75,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 
 | Package | Contents |
 |---|---|
-| `agents` | Cross-agent skills in `~/.agents/skills/`: exa-agent, exa-search, tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker |
+| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker |
 | `bash` | bashrc / profile / bash_logout |
 | `btop` | System monitor config (btop 1.4+) |
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |

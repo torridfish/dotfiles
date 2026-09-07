@@ -11,6 +11,7 @@ ExecStart=%h/.nvm/versions/node/v22.20.0/bin/node %h/.local/lib/dsh-web-proxy/pr
 Environment=DSH_PROXY_PORT=3081
 Environment=DSH_TARGET_PORT=3080
 Environment=DSH_PUBLIC_HOST=ser8.taild36d43.ts.net
+Environment=DSH_PUBLIC_PORT=3081
 # 只接受帶著這個 Tailscale 身分的請求（serve 注入且覆寫，用戶端偽造不了）
 Environment=DSH_ALLOWED_LOGINS=justinwu6900942@gmail.com
 # 想再收緊到「只有這幾台裝置」就填裝置名或 tailnet IP，逗號分隔；留空=不限裝置
