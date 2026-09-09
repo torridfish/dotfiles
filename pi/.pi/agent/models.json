@@ -1,0 +1,27 @@
+{
+  "providers": {
+    "vllm": {
+      "baseUrl": "https://llm.torridfish.tech/v1",
+      "api": "openai-completions",
+      "apiKey": "$VLLM_API_KEY",
+      "authHeader": true,
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsUsageInStreaming": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "GLM-5.3-Flash-EXL3",
+          "name": "GLM-5.3-Flash-EXL3",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "contextWindow": 850000,
+          "maxTokens": 16384,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    }
+  }
+}
