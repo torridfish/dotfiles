@@ -2,7 +2,9 @@
   "lastChangelogVersion": "0.85.1",
   "defaultProvider": "vllm",
   "defaultModel": "GLM-5.3-Flash-EXL3",
-  "packages": [],
+  "packages": [
+    "npm:pi-web-access"
+  ],
   "theme": "dark",
   "markdown": {
     "mermaid": "off"
