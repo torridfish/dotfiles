@@ -36,7 +36,11 @@
  */
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { readFileSync, statSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import {
+	Image as TuiImage,
 	Key,
 	allocateImageId,
 	deleteKittyImage,
@@ -148,13 +152,97 @@ interface TuiLike {
 let savedCaps: TerminalCapabilities | null = null;
 let zoomImageId: number | null = null;
 
-// 放大比例（相對於「填滿可用寬高」的大小），檢視中可用 +/- 調整
+// 放大比例（相對於「填滿可用寬高」的大小），檢視中可用 +/- 調整；
+// 預設值可由 ~/.pi/agent/settings.json 的 imageDisplay.zoomScale 覆蓋
 const ZOOM_SCALE_MIN = 0.4;
 const ZOOM_SCALE_MAX = 1;
 let zoomScale = 0.8;
 
+function readZoomScaleDefault(): void {
+	try {
+		const raw = JSON.parse(
+			readFileSync(join(homedir(), ".pi", "agent", "settings.json"), "utf8"),
+		) as { imageDisplay?: { zoomScale?: number } };
+		const v = raw.imageDisplay?.zoomScale;
+		if (typeof v === "number" && v >= ZOOM_SCALE_MIN && v <= ZOOM_SCALE_MAX) zoomScale = v;
+	} catch {
+		// 沒有設定檔就用預設 0.8
+	}
+}
+
 function adjustZoomScale(delta: number): void {
 	zoomScale = Math.min(ZOOM_SCALE_MAX, Math.max(ZOOM_SCALE_MIN, Math.round((zoomScale + delta) * 10) / 10));
+}
+
+// ── transcript 圖片顯示強化（imageDisplay.center / scale）──
+// 直接 patch pi-tui Image.prototype：pi 內建顯示的所有圖（tool result 圖、
+// prompt 附圖）都會套用置中與縮放，且 pi 內部重建元件時也自動生效。
+// mermaid-mmrs 自己管理顯示，會在它的 Image 上標 __imgNoEnhance 排除。
+
+interface DisplayPrefs {
+	center: boolean;
+	scale: number;
+}
+
+const AGENT_SETTINGS = join(homedir(), ".pi", "agent", "settings.json");
+let displayPrefs: DisplayPrefs = { center: true, scale: 1 };
+let displayPrefsMtime = -1;
+
+function readDisplayPrefs(): DisplayPrefs {
+	try {
+		const mtime = statSync(AGENT_SETTINGS).mtimeMs;
+		if (mtime === displayPrefsMtime) return displayPrefs;
+		displayPrefsMtime = mtime;
+		const raw = JSON.parse(readFileSync(AGENT_SETTINGS, "utf8")) as {
+			imageDisplay?: { center?: boolean; scale?: number };
+		};
+		const d = raw.imageDisplay ?? {};
+		displayPrefs = {
+			center: typeof d.center === "boolean" ? d.center : true,
+			scale: typeof d.scale === "number" && d.scale >= 0.2 && d.scale <= 3 ? d.scale : 1,
+		};
+	} catch {
+		displayPrefs = { center: true, scale: 1 };
+		displayPrefsMtime = -1;
+	}
+	return displayPrefs;
+}
+
+let imageProtoPatched = false;
+
+function patchImagePrototype(): void {
+	if (imageProtoPatched) return;
+	imageProtoPatched = true;
+	const proto = TuiImage.prototype as unknown as {
+		render: (width: number) => string[];
+	};
+	const origRender = proto.render;
+	proto.render = function (this: any, width: number): string[] {
+		const prefs = readDisplayPrefs();
+		if (this.__imgNoEnhance) return origRender.call(this, width);
+		// 縮放：以第一次看到的 maxWidthCells 為基準（避免重複乘）
+		if (typeof this.options?.maxWidthCells === "number") {
+			if (this.__imgBaseWidth === undefined) this.__imgBaseWidth = this.options.maxWidthCells;
+			if (this.__appliedScale !== prefs.scale) {
+				this.options.maxWidthCells = Math.max(10, Math.floor(this.__imgBaseWidth * prefs.scale));
+				this.__appliedScale = prefs.scale;
+				// Image 的私有 cache，運行時可直接清掉強制重算
+				this.cachedLines = undefined;
+				this.cachedWidth = undefined;
+			}
+		}
+		const lines = origRender.call(this, width);
+		if (!prefs.center) return lines;
+		// Image 實際渲染寬 = min(maxWidthCells, width - 2)，據此置中
+		const cols =
+			typeof this.options?.maxWidthCells === "number"
+				? Math.min(this.options.maxWidthCells, Math.max(1, width - 2))
+				: 0;
+		const pad = cols > 0 ? Math.floor((width - cols) / 2) : 0;
+		if (pad <= 0) return lines;
+		const padStr = " ".repeat(pad);
+		return lines.map((l) => (l.includes("\x1b_G") || l.includes("\x1b]1337;") ? padStr + l : l));
+	};
 }
 
 /** 進入檢視：隱藏可視畫面上所有 kitty 圖片 */
@@ -648,6 +736,9 @@ async function zoomHandler(ctx: ExtensionContext): Promise<void> {
 }
 
 export default function (pi: ExtensionAPI) {
+	readZoomScaleDefault();
+	patchImagePrototype();
+
 	// 記錄 prompt 附圖
 	pi.on("before_agent_start", async (event) => {
 		for (const block of event.images ?? []) {

@@ -7,12 +7,17 @@
 - **Alt+Z** 或 **/img**：進入檢視，從 session 中最新的一張圖開始
 - 檢視中：
   - **←/→** 在 session 收集到的圖片之間切換（新 ↔ 舊）
-  - **+ / −**（`=` 同 `+`）調整放大比例（0.4–1.0，預設 0.8，記憶到下次）
+  - **+ / −**（`=` 同 `+`）調整放大比例（0.4–1.0；預設由
+    `~/.pi/agent/settings.json` 的 `imageDisplay.zoomScale` 決定，預設 0.8；
+    檢視中的調整記憶到下次）
   - **Esc**（或 `q`）離開；離開後 transcript 停留在目前那張圖的位置
     （不會跳回 bottom，也不會還原進入前的捲動位置）
 
-平時圖片常駐在對話中（mermaid 圖的置中與顯示大小由 mermaid-mmrs 的
-`config.json` 控制），`/img` 是瀏覽與臨時放大用的。
+平時圖片常駐在對話中。本 extension 會 patch pi-tui 的 `Image.prototype`，
+讓 **pi 內建顯示的所有圖**（`read` tool 結果、prompt 附圖）也套用
+`~/.pi/agent/settings.json` 的 `imageDisplay` 設定（置中 + 縮放，mtime cache、
+改設定後重繪即生效）；mermaid 圖由 mermaid-mmrs 自己套用同一組設定。
+`/img` 則是瀏覽與臨時放大用的。
 
 ## 兩種檢視模式
 
@@ -85,3 +90,5 @@ kitty image id；循環切換時先送 `deleteKittyImage(id)` 再重傳，確保
 - Session 圖片 ring buffer 上限 30 張 / 300MB，避免記憶體失控。
 - 快捷鍵寫死為 `alt+z`（pi 原生未使用）；要換鍵改 `index.ts` 最後的
   `pi.registerShortcut("alt+z", ...)`。
+- `Image.prototype` patch 依賴 pi-tui 內部欄位（`options.maxWidthCells`、
+  `cachedLines`）；pi-tui 改版時可能需要跟著調整。

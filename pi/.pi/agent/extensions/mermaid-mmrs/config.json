@@ -3,7 +3,5 @@
   "zoom": 2,
   "maxWidthCells": 9999,
   "hideCode": true,
-  "center": true,
-  "scale": 1,
   "cacheDir": "/home/torridfish/.cache/pi-mermaid"
 }

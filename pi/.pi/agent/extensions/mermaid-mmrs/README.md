@@ -37,7 +37,26 @@ cargo install mermaid-rs-cli resvg
 
 ## 設定
 
-`config.json`（與 index.ts 同目錄，首次變更主題時自動寫入）：
+### 顯示設定（`~/.pi/agent/settings.json` 的 `imageDisplay`）
+
+圖片／mermaid 顯示的共用設定集中在使用者層級，改完存檔後**下一次 transcript
+渲染即生效，不需 reload**（mermaid 圖在畫面重繪時自動套用新尺寸/置中）：
+
+```json
+{
+  "imageDisplay": {
+    "center": true,     // 圖片在 transcript 中水平置中
+    "scale": 1,         // mermaid 圖顯示倍率（0.2-3，1 = 原尺寸）
+    "zoomScale": 0.8    // /img 檢視的預設縮放（0.4-1，img extension 讀取）
+  }
+}
+```
+
+`center` / `scale` 適用於 mermaid 圖（本 extension 處理）以及 pi 內建顯示的
+所有 transcript 圖片（read tool 結果、prompt 附圖，由 img extension 的
+`Image.prototype` patch 處理）。
+
+### mermaid 專屬設定（`config.json`，與 index.ts 同目錄）
 
 ```json
 {
@@ -45,8 +64,6 @@ cargo install mermaid-rs-cli resvg
   "zoom": 2,                // resvg 縮放倍率（1-8），影響 PNG 解析度
   "maxWidthCells": 9999,    // 圖片最大寬度（終端格數）；預設極大值 = 自適應終端寬度
   "hideCode": true,         // 折疊已渲染的 mermaid code fence
-  "center": true,           // 圖片在 transcript 中水平置中
-  "scale": 1,               // 顯示大小倍率（0.2-3，1 = 原尺寸），縮放後寬仍不超過終端寬
   "mmrsPath": null,         // 覆寫 mmrs 路徑（選填）
   "resvgPath": null,        // 覆寫 resvg 路徑（選填）
   "fontPath": null,         // 覆寫字型路徑（選填）
@@ -54,8 +71,8 @@ cargo install mermaid-rs-cli resvg
 }
 ```
 
-`center` / `scale` 在每次 transcript 渲染時讀取，改完 config.json 後 reload
-extension（或重開 pi）即對所有已渲染的圖生效，不需重新 render。
+註：`center` / `scale` 若留在 config.json 仍會被當成 fallback，但正式位置是
+`~/.pi/agent/settings.json` 的 `imageDisplay`。
 
 環境變數 `PI_MERMAID_MMRS` / `PI_MERMAID_RESVG` 亦可覆寫二進位路徑。
 

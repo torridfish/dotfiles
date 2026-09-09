@@ -48,7 +48,7 @@
 
 import { execFile, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -166,6 +166,49 @@ function loadConfig(): void {
 
 function saveConfig(): void {
 	writeFileSync(CONFIG_PATH, `${JSON.stringify(config, null, 2)}\n`, "utf8");
+}
+
+// ── ~/.pi/agent/settings.json 的 imageDisplay 設定 ──
+// 顯示相關的設定集中在使用者層級，覆蓋 config.json 的同名字段；
+// 以 mtime cache，改 settings.json 後下一次 transcript 渲染即生效，不需 reload。
+
+interface ImageDisplaySettings {
+	center?: boolean;
+	scale?: number;
+	zoomScale?: number; // /img 檢視的預設縮放（由 img extension 讀取）
+}
+
+const AGENT_SETTINGS_PATH = join(homedir(), ".pi", "agent", "settings.json");
+
+let imageDisplay: ImageDisplaySettings = {};
+let imageDisplayMtime = -1;
+
+function readImageDisplay(): void {
+	try {
+		const mtime = statSync(AGENT_SETTINGS_PATH).mtimeMs;
+		if (mtime === imageDisplayMtime) return;
+		imageDisplayMtime = mtime;
+		const raw = JSON.parse(readFileSync(AGENT_SETTINGS_PATH, "utf8")) as {
+			imageDisplay?: ImageDisplaySettings;
+		};
+		imageDisplay = raw.imageDisplay ?? {};
+	} catch {
+		imageDisplay = {};
+		imageDisplayMtime = -1;
+	}
+}
+
+/** 置中設定：settings.json 的 imageDisplay.center 覆蓋 config.json */
+function effectiveCenter(): boolean {
+	readImageDisplay();
+	return typeof imageDisplay.center === "boolean" ? imageDisplay.center : config.center;
+}
+
+/** 顯示倍率：settings.json 的 imageDisplay.scale 覆蓋 config.json（0.2–3） */
+function effectiveScale(): number {
+	readImageDisplay();
+	const s = imageDisplay.scale;
+	return typeof s === "number" && s >= 0.2 && s <= 3 ? s : config.scale;
 }
 
 // ---------------------------------------------------------------------------
@@ -577,6 +620,57 @@ function centerImageLines(lines: string[], width: number, columns: number): stri
 	);
 }
 
+/**
+ * image 模式的顯示元件：套用 effectiveScale() / effectiveCenter()。
+ * Entry 元件跨 frame 快取，所以 scale 變更時需重建 Image（mtime cache 失效後
+ * effectiveScale() 回傳新值，下一個 frame 就會換新尺寸）。
+ */
+function displayedImageComponent(
+	pngBase64: string,
+	naturalWidthPx: number | undefined,
+	path: string,
+	fallbackColor: (s: string) => string,
+): Component {
+	let cached: { scale: number; displayColumns: number; image: Image } | null = null;
+	return {
+		render(width: number): string[] {
+			const scale = effectiveScale();
+			if (!cached || cached.scale !== scale) {
+				const cell = getCellDimensions();
+				// pi-tui Image 會把圖縮放到填滿 maxWidthCells，所以「原尺寸」的
+				// cap 是自然 SVG 寬度，再乘上顯示倍率，並受 config.maxWidthCells 限制
+				const naturalColumns = naturalWidthPx
+					? Math.max(10, Math.ceil(naturalWidthPx / cell.widthPx))
+					: config.maxWidthCells;
+				const displayColumns = Math.max(
+					10,
+					Math.floor(Math.min(config.maxWidthCells, naturalColumns) * scale),
+				);
+				cached = {
+					scale,
+					displayColumns,
+					image: new Image(
+						pngBase64,
+						"image/png",
+						{ fallbackColor },
+						{ maxWidthCells: displayColumns, filename: path },
+					),
+				};
+				// 標記排除 img extension 的 prototype 強化（避免二次縮放/置中）
+				(cached.image as unknown as { __imgNoEnhance?: boolean }).__imgNoEnhance = true;
+			}
+			const lines = cached.image.render(width);
+			if (!effectiveCenter()) return lines;
+			// Image 實際渲染寬 = min(maxWidthCells, width - 2)，據此置中
+			return centerImageLines(lines, width, Math.min(cached.displayColumns, Math.max(1, width - 2)));
+		},
+		invalidate: () => {
+			cached?.image.invalidate();
+			cached = null;
+		},
+	};
+}
+
 // --- capability detection ---------------------------------------------------
 
 type DisplayMode = "kitty-placeholder" | "image" | "text";
@@ -682,7 +776,7 @@ function emitPlaceholder(data: RenderOk, availableWidth: number): string[] {
 	}
 
 	// Fit the diagram into the available width, aspect preserved, rows capped.
-	// config.scale 再乘上顯示倍率（可 >1 放大，但寬不超過可用寬度）。
+	// effectiveScale() 再乘上顯示倍率（可 >1 放大，但寬不超過可用寬度）。
 	const cell = getCellDimensions();
 	const maxColumns = Math.max(8, Math.min(config.maxWidthCells, Math.max(8, availableWidth)));
 	const fit = Math.min(
@@ -690,7 +784,7 @@ function emitPlaceholder(data: RenderOk, availableWidth: number): string[] {
 		(MAX_PLACEHOLDER_ROWS * cell.heightPx) / heightPx,
 		1,
 	);
-	const displayScale = fit * config.scale;
+	const displayScale = fit * effectiveScale();
 	const columns = Math.max(1, Math.min(maxColumns, Math.ceil((widthPx * displayScale) / cell.widthPx)));
 	const rows = Math.max(1, Math.ceil((heightPx * displayScale) / cell.heightPx));
 
@@ -701,7 +795,7 @@ function emitPlaceholder(data: RenderOk, availableWidth: number): string[] {
 		placementGeom.set(id, geometry);
 	}
 	const grid = placeholderGrid(columns, rows, id);
-	return config.center ? centerImageLines(grid, availableWidth, columns) : grid;
+	return effectiveCenter() ? centerImageLines(grid, availableWidth, columns) : grid;
 }
 
 /** Delete all uploaded kitty images and reset placeholder runtime state. */
@@ -758,40 +852,9 @@ export default function (pi: ExtensionAPI) {
 		} else {
 			const pngBase64 = pngFor(data);
 			if (pngBase64 && displayMode === "image") {
-				// pi-tui Image scales the image up/down to fill maxWidthCells, so a
-				// large cap (e.g. 9999 = auto-fit) stretches every diagram to the
-				// full transcript width. Cap at the diagram's natural SVG width so
-				// it renders at original size, still bounded by the config cap.
-				// config.scale 再乘上顯示倍率（Image 會填滿 maxWidthCells，縮小它即可縮放）。
-				const cell = getCellDimensions();
-				const naturalColumns = data.widthPx
-					? Math.max(10, Math.ceil(data.widthPx / cell.widthPx))
-					: config.maxWidthCells;
-				const baseColumns = Math.min(config.maxWidthCells, naturalColumns);
-				const displayColumns = Math.max(10, Math.floor(baseColumns * config.scale));
-				const image = new Image(
-					pngBase64,
-					"image/png",
-					{ fallbackColor: (s) => theme.fg("toolOutput", s) },
-					{
-						maxWidthCells: displayColumns,
-						filename: path,
-					},
+				box.addChild(
+					displayedImageComponent(pngBase64, data.widthPx, path, (s) => theme.fg("toolOutput", s)),
 				);
-				if (config.center) {
-					// Image 實際渲染寬 = min(maxWidthCells, width - 2)，據此置中
-					box.addChild({
-						render: (width: number) =>
-							centerImageLines(
-								image.render(width),
-								width,
-								Math.min(displayColumns, Math.max(1, width - 2)),
-							),
-						invalidate: () => image.invalidate(),
-					});
-				} else {
-					box.addChild(image);
-				}
 			}
 		}
 		if (options.expanded) {

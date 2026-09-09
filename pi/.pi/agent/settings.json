@@ -8,5 +8,10 @@
     "mermaid": "off"
   },
   "defaultThinkingLevel": "medium",
-  "tuiMode": "fullscreen"
+  "tuiMode": "fullscreen",
+  "imageDisplay": {
+    "center": true,
+    "scale": 1,
+    "zoomScale": 0.8
+  }
 }
