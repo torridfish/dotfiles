@@ -110,36 +110,49 @@ export default function (pi: ExtensionAPI) {
     },
   });
 
+  // ── Streaming event handlers ──
+  // NOTE: registered once at extension load. session_start fires again on
+  // /new, /resume and /fork — handlers registered inside it would stack up
+  // and double-count deltas.
+
+  pi.on("message_start", async (event) => {
+    if (event.message.role === "user") {
+      tracker.beginTtft();
+    } else if (event.message.role === "assistant") {
+      tracker.start();
+    }
+  });
+
+  pi.on("message_update", async (event) => {
+    if (event.message.role === "assistant" && event.assistantMessageEvent) {
+      // Count incrementally from the delta itself (text/thinking/toolcall);
+      // re-tokenizing the whole message parts per delta was O(n²).
+      tracker.update(event.assistantMessageEvent);
+    }
+  });
+
+  pi.on("message_end", async (event) => {
+    if (event.message.role === "assistant") {
+      tracker.end((event.message as any).usage);
+    }
+  });
+
+  // turn_end normally fires after message_end (freeze() is a no-op then);
+  // it only matters as a freeze point when a stream was interrupted.
+  pi.on("turn_end", async () => {
+    tracker.freeze();
+  });
+
+  // Safety net: if a stream is aborted (Esc/Ctrl-C) or errors, message_end may
+  // not fire for that message — agent_end always does.
+  pi.on("agent_end", async () => {
+    tracker.freeze();
+  });
+
   pi.on("session_start", async (_event, ctx) => {
     sessionCtxRef = ctx;
     footerEnabled = true;
 
     ctx.ui.setFooter(makeFooter);
-
-    // ── Streaming event handlers ──
-
-    pi.on("message_start", async (event) => {
-      if (event.message.role === "user") {
-        tracker.beginTtft();
-      } else if (event.message.role === "assistant") {
-        tracker.start();
-      }
-    });
-
-    pi.on("message_update", async (event) => {
-      if (event.message.role === "assistant") {
-        tracker.update(event.message.content || []);
-      }
-    });
-
-    pi.on("message_end", async (event) => {
-      if (event.message.role === "assistant") {
-        tracker.end((event.message as any).usage);
-      }
-    });
-
-    pi.on("turn_end", async () => {
-      tracker.reset();
-    });
   });
 }
