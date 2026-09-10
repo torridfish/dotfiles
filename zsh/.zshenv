@@ -5,6 +5,5 @@ typeset -U path PATH
 
 . "$HOME/.cargo/env"
 
-# Secrets: separate file, mode 600. Here rather than .zshrc so non-interactive
-# shells (ssh host 'cmd') get them too.
-[ -f "$HOME/.config/zsh/secrets.zsh" ] && . "$HOME/.config/zsh/secrets.zsh"
+# Secrets files
+[ -f "$HOME/secrets.zsh" ] && . "$HOME/secrets.zsh"
