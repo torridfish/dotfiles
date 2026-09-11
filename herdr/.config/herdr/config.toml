@@ -1,0 +1,11 @@
+onboarding = false
+
+[remote]
+manage_ssh_config = false
+
+[theme]
+name = "kanagawa"
+auto_switch = false
+
+[ui.toast]
+delivery = "herdr"
