@@ -3,6 +3,26 @@ onboarding = false
 [remote]
 manage_ssh_config = false
 
+[keys]
+# Cycle directly through the workspace list, including remote machines.
+previous_workspace = "ctrl+up"
+next_workspace = "ctrl+down"
+
+# Cycle directly through the agent list.
+previous_agent = "ctrl+shift+up"
+next_agent = "ctrl+shift+down"
+
+# Cycle through split panes regardless of their horizontal/vertical layout.
+cycle_pane_previous = "ctrl+left"
+cycle_pane_next = "ctrl+right"
+
+# Switch tabs.
+previous_tab = "ctrl+shift+left"
+next_tab = "ctrl+shift+right"
+
+# Create a workspace on the machine that owns the current workspace.
+new_workspace = "prefix+shift+n"
+
 [theme]
 name = "kanagawa"
 auto_switch = false
