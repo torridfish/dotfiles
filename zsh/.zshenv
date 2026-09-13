@@ -3,7 +3,7 @@
 path=("$HOME/.local/bin" "$HOME/.cargo/bin" /usr/local/bin /usr/bin /bin $path)
 typeset -U path PATH
 
-[ -f "$HOME/.cargo/env"] && . "$HOME/.cargo/env"
+[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # Secrets files
 [ -f "$HOME/secrets.zsh" ] && . "$HOME/secrets.zsh"
