@@ -134,7 +134,7 @@ source = "https://github.com/anthropics/claude-plugins-official.git"
 last_updated = "2026-06-16T17:52:17Z"
 last_revision = "1e1a8d1c8480dfe967d2eb76059fd5a7fb2efdd6"
 source_type = "git"
-source = "https://github.com/torrid-fish/research-init.git"
+source = "https://github.com/torridfish/research-init.git"
 
 [plugins."documents@openai-primary-runtime"]
 enabled = true

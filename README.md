@@ -40,7 +40,7 @@ Intentionally **not** tracked: GNOME desktop settings (dconf database, binary â€
 ## Quick start (new machine)
 
 ```bash
-git clone git@github.com:torrid-fish/dotfiles.git ~/Code/dotfiles
+git clone git@github.com:torridfish/dotfiles.git ~/Code/dotfiles
 cd ~/Code/dotfiles
 ./setup.sh -y
 ```
