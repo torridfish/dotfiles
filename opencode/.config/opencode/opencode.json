@@ -7,7 +7,7 @@
       "npm": "@ai-sdk/openai-compatible",
       "name": "vllm1",
       "options": {
-        "baseURL": "https://llm.torridfish.tech/v1",
+        "baseURL": "https://api.torridfish.com/v1",
         "apiKey": "{env:VLLM_API_KEY}"
       },
       "models": {

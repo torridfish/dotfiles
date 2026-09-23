@@ -1,7 +1,7 @@
 {
   "providers": {
     "vllm": {
-      "baseUrl": "https://llm.torridfish.tech/v1",
+      "baseUrl": "https://api.torridfish.com/v1",
       "api": "openai-completions",
       "apiKey": "$VLLM_API_KEY",
       "authHeader": true,
