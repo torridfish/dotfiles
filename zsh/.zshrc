@@ -149,6 +149,13 @@ kitty-terminfo() {
     command ssh "$1" 'mkdir -p ~/.terminfo && tic -x -o ~/.terminfo /dev/stdin'
 }
 
+rcopy() {  
+  # rcopy myhost ~/shots/foo.png
+  local host=$1 path=$2 mime
+  mime=$(ssh "$host" "file -b --mime-type -- $path") || return
+  ssh "$host" "cat -- $path" | wl-copy -t "$mime"
+}
+
 
 # pnpm
 export PNPM_HOME="$HOME/.local/share/pnpm"
