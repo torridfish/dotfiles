@@ -1,78 +1,78 @@
 {
- "permissions": {
-  "allow": [
-   "Bash(git reset:*)",
-   "Bash(git add:*)",
-   "Bash(git commit:*)",
-   "WebFetch(domain:docs.n8n.io)",
-   "WebSearch",
-   "WebFetch(domain:medium.com)",
-   "WebFetch(domain:github.com)",
-   "WebFetch(domain:raw.githubusercontent.com)",
-   "WebFetch(domain:dev.to)",
-   "Bash(test:*)",
-   "Bash(npm run build:*)",
-   "Bash(npm install)",
-   "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/)",
-   "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/)",
-   "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/examples/)",
-   "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/envs/)",
-   "Bash(.venv/bin/python test.py)",
-   "Bash(wait)",
-   "Bash(DISPLAY=:0 .venv/bin/python test.py)",
-   "Bash(.venv/bin/pip list:*)",
-   "Bash(.venv/bin/pip install:*)",
-   "Bash(ls /home/torridfish/Code/LevDoom/.venv/bin/pip*)",
-   "Bash(/home/torridfish/Code/LevDoom/.venv/bin/python -m pip install pynput -q)",
-   "Bash(python3 -c \"import pynput; print\\(''ok''\\)\")",
-   "Bash(python3 -c \"import keyboard; print\\(''ok''\\)\")",
-   "Bash(python3 -m pip install pynput -q)",
-   "Bash(sudo apt-get:*)",
-   "Bash(/home/torridfish/Code/LevDoom/.venv/bin/python -m ensurepip)",
-   "WebFetch(domain:api.github.com)",
-   "Bash(ls -la /home/torridfish/Code/nav_hw2/*.json /home/torridfish/Code/nav_hw2/*.txt /home/torridfish/Code/nav_hw2/*.py)",
-   "Bash(grep -E \"\\\\.\\(py|txt|json|yaml|yml|toml|cfg|ini|md\\)$\")",
-   "Bash(find /home/torridfish/Code/nav_hw2 -name *.csv)",
-   "Bash(ls -1 /home/torridfish/Code/nav_hw2/Simulation/*.py)",
-   "Bash(pdflatex -interaction=nonstopmode main.tex)",
-   "Bash(bibtex main:*)",
-   "Bash(pdflatex -interaction=nonstopmode report.tex)"
-  ],
-  "defaultMode": "auto"
- },
- "statusLine": {
-  "type": "command",
-  "command": "bash -c 'cols=${COLUMNS:-}; case \"$cols\" in \"\"|*[!0-9]*) cols=$(stty size 2>/dev/null </dev/tty | awk '\"'\"'{print $2}'\"'\"');; esac; case \"$cols\" in \"\"|*[!0-9]*) cols=120;; esac; export COLUMNS=$(( cols > 4 ? cols - 4 : 1 )); hud_home=\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"; plugin_dir=$(ls -d \"$hud_home\"/plugins/cache/*/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | grep -E '\"'\"'^[0-9]+\\.[0-9]+\\.[0-9]+[[:space:]]'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); \"/home/torridfish/.bun/bin/bun\" --env-file /dev/null \"${plugin_dir}src/index.ts\" | \"/home/torridfish/.bun/bin/bun\" --env-file /dev/null \"$hud_home/plugins/claude-hud/right-align.mjs\"'"
- },
- "enabledPlugins": {
-  "typescript-lsp@claude-plugins-official": true,
-  "autoresearch@autoresearch": true,
-  "academic-research-skills@academic-research-skills": true,
-  "claude-hud@claude-hud": true
- },
- "extraKnownMarketplaces": {
-  "autoresearch": {
-   "source": {
-    "source": "git",
-    "url": "https://github.com/uditgoenka/autoresearch.git"
-   }
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "Bash(git reset:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "WebFetch(domain:docs.n8n.io)",
+      "WebSearch",
+      "WebFetch(domain:medium.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:dev.to)",
+      "Bash(test:*)",
+      "Bash(npm run build:*)",
+      "Bash(npm install)",
+      "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/)",
+      "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/)",
+      "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/examples/)",
+      "Bash(ls /home/torridfish/Code/LevDoom/.venv/lib/python*/site-packages/levdoom/envs/)",
+      "Bash(.venv/bin/python test.py)",
+      "Bash(wait)",
+      "Bash(DISPLAY=:0 .venv/bin/python test.py)",
+      "Bash(.venv/bin/pip list:*)",
+      "Bash(.venv/bin/pip install:*)",
+      "Bash(ls /home/torridfish/Code/LevDoom/.venv/bin/pip*)",
+      "Bash(/home/torridfish/Code/LevDoom/.venv/bin/python -m pip install pynput -q)",
+      "Bash(python3 -c \"import pynput; print\\(''ok''\\)\")",
+      "Bash(python3 -c \"import keyboard; print\\(''ok''\\)\")",
+      "Bash(python3 -m pip install pynput -q)",
+      "Bash(sudo apt-get:*)",
+      "Bash(/home/torridfish/Code/LevDoom/.venv/bin/python -m ensurepip)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(ls -la /home/torridfish/Code/nav_hw2/*.json /home/torridfish/Code/nav_hw2/*.txt /home/torridfish/Code/nav_hw2/*.py)",
+      "Bash(grep -E \"\\\\.\\(py|txt|json|yaml|yml|toml|cfg|ini|md\\)$\")",
+      "Bash(find /home/torridfish/Code/nav_hw2 -name *.csv)",
+      "Bash(ls -1 /home/torridfish/Code/nav_hw2/Simulation/*.py)",
+      "Bash(pdflatex -interaction=nonstopmode main.tex)",
+      "Bash(bibtex main:*)",
+      "Bash(pdflatex -interaction=nonstopmode report.tex)"
+    ],
+    "defaultMode": "auto"
   },
-  "academic-research-skills": {
-   "source": {
-    "source": "github",
-    "repo": "Imbad0202/academic-research-skills"
-   }
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "^(startup|resume|clear|compact|fork)$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/home/torridfish/.claude/hooks/herdr-agent-state.sh' session",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
   },
-  "claude-hud": {
-   "source": {
-    "source": "github",
-    "repo": "jarrodwatts/claude-hud"
-   }
-  }
- },
- "tui": "fullscreen",
- "skipDangerousModePermissionPrompt": true,
- "theme": "dark",
- "agentPushNotifEnabled": true,
- "skipAutoPermissionPrompt": true
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'cols=${COLUMNS:-}; case \"$cols\" in \"\"|*[!0-9]*) cols=$(stty size 2>/dev/null </dev/tty | awk '\"'\"'{print $2}'\"'\"');; esac; case \"$cols\" in \"\"|*[!0-9]*) cols=120;; esac; export COLUMNS=$(( cols > 4 ? cols - 4 : 1 )); hud_home=\"${CLAUDE_CONFIG_DIR:-$HOME/.claude}\"; plugin_dir=$(ls -d \"$hud_home\"/plugins/cache/*/claude-hud/*/ 2>/dev/null | awk -F/ '\"'\"'{ print $(NF-1) \"\\t\" $(0) }'\"'\"' | grep -E '\"'\"'^[0-9]+\\.[0-9]+\\.[0-9]+[[:space:]]'\"'\"' | sort -t. -k1,1n -k2,2n -k3,3n -k4,4n | tail -1 | cut -f2-); \"/home/torridfish/.bun/bin/bun\" --env-file /dev/null \"${plugin_dir}src/index.ts\" | \"/home/torridfish/.bun/bin/bun\" --env-file /dev/null \"$hud_home/plugins/claude-hud/right-align.mjs\"'"
+  },
+  "enabledPlugins": {
+    "claude-hud@claude-hud": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-hud": {
+      "source": {
+        "source": "github",
+        "repo": "jarrodwatts/claude-hud"
+      }
+    }
+  },
+  "tui": "fullscreen",
+  "skipDangerousModePermissionPrompt": true,
+  "theme": "dark",
+  "agentPushNotifEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
