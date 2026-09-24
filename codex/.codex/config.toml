@@ -1,5 +1,5 @@
 personality = "pragmatic"
-model = "gpt-5.6-sol"
+model = "gpt-6-astra"
 model_reasoning_effort = "medium"
 service_tier = "default"
 approvals_reviewer = "user"
@@ -55,6 +55,7 @@ trust_level = "trusted"
 [tui.model_availability_nux]
 "gpt-5.5" = 4
 "gpt-5.6-sol" = 1
+gpt-6-astra = 4
 
 [notice]
 fast_default_opt_out = true
@@ -95,21 +96,15 @@ NODE_REPL_NODE_MODULE_DIRS = ""
 NODE_REPL_NODE_PATH = "/opt/codex-desktop/resources/node-runtime/bin/node"
 NODE_REPL_TRUSTED_CODE_PATHS = "/home/torridfish/.codex"
 CODEX_HOME = "/home/torridfish/.codex"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "028a14b6eaa6d98dac2aae00764345ab9f244801ed8493d42b9af3be5575006e,f204d340535055781952b10ed396de20b842f00a19e430852f7e121ad1ce91f6"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "939555af59361e95b1f064181829c9dfc4ac99599d1b9949596900443ac15787"
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
 NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
 NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
 BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
-BROWSER_USE_CODEX_APP_VERSION = "26.727.51351"
+BROWSER_USE_CODEX_APP_VERSION = "26.730.61309"
 CODEX_CLI_PATH = "/home/torridfish/.nvm/versions/node/v22.20.0/lib/node_modules/@openai/codex/bin/codex.js"
 
-[mcp_servers.node_repl.tools]
-
-[mcp_servers.node_repl.tools.js]
-approval_mode = "approve"
-
 [marketplaces.openai-bundled]
-last_updated = "2026-08-04T12:49:20Z"
 source_type = "local"
 source = "/home/torridfish/.codex/.tmp/bundled-marketplaces/openai-bundled"
 
@@ -117,12 +112,6 @@ source = "/home/torridfish/.codex/.tmp/bundled-marketplaces/openai-bundled"
 last_updated = "2026-08-06T05:32:16Z"
 source_type = "local"
 source = "/home/torridfish/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
-
-[marketplaces.autoresearch-local]
-last_updated = "2026-08-13T07:34:25Z"
-last_revision = "050e30dc4ba0974b03f2873111b9901ec3211390"
-source_type = "git"
-source = "https://github.com/uditgoenka/autoresearch.git"
 
 [marketplaces.claude-plugins-official]
 last_updated = "2026-08-21T21:05:57Z"
@@ -148,9 +137,6 @@ enabled = true
 [plugins."presentations@openai-primary-runtime"]
 enabled = true
 
-[plugins."autoresearch@autoresearch-local"]
-enabled = true
-
 [plugins."bootstrap-research@research-init"]
 enabled = true
 
@@ -173,6 +159,7 @@ enabled = true
 enabled = true
 
 [features]
+hooks = true
 js_repl = false
 
 [desktop]
@@ -195,5 +182,11 @@ global = "fileManager"
 
 [shell_environment_policy.set]
 BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
-NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "028a14b6eaa6d98dac2aae00764345ab9f244801ed8493d42b9af3be5575006e,f204d340535055781952b10ed396de20b842f00a19e430852f7e121ad1ce91f6"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "939555af59361e95b1f064181829c9dfc4ac99599d1b9949596900443ac15787"
 NODE_REPL_TRUSTED_CODE_PATHS = "/home/torridfish/.codex"
+
+[hooks.state]
+
+[hooks.state."/home/torridfish/.codex/hooks.json:session_start:0:0"]
+trusted_hash = "sha256:0e66eb335aa16adf8af1b4db18d6ae1a3a43ddda258710e8a63c88f3858ff321"
+enabled = false
