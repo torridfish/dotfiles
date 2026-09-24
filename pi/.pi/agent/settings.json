@@ -1,9 +1,11 @@
 {
-  "lastChangelogVersion": "0.87.0",
+  "lastChangelogVersion": "0.87.1",
   "defaultProvider": "vllm",
   "defaultModel": "GLM-5.3-Flash-EXL3",
   "packages": [
-    "npm:pi-web-access"
+    "npm:pi-web-access",
+    "../../Code/pi-subagents-herdr",
+    "npm:pi-mcp-adapter"
   ],
   "theme": "dark",
   "markdown": {
@@ -14,6 +16,8 @@
   "imageDisplay": {
     "center": true,
     "scale": 1,
-    "zoomScale": 0.8
-  }
+    "zoomScale": 0.6
+  },
+  "hideThinkingBlock": false,
+  "externalEditor": "vim"
 }
