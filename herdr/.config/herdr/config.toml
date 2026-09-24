@@ -28,4 +28,13 @@ name = "kanagawa"
 auto_switch = false
 
 [ui.toast]
-delivery = "herdr"
+delivery = "system"
+
+[ui]
+status_indicators = "dots"
+
+[[keys.command]]
+key = "prefix+m"
+type = "plugin_action"
+command = "local.remote-machine-toggle.open"
+description = "manage remote machines"
