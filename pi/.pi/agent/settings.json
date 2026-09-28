@@ -1,7 +1,7 @@
 {
   "lastChangelogVersion": "0.87.1",
-  "defaultProvider": "vllm",
-  "defaultModel": "GLM-5.3-Flash-EXL3",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "glm-5.3-flash",
   "packages": [
     "npm:pi-web-access",
     "../../Code/pi-subagents-herdr",
