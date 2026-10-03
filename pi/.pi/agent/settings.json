@@ -1,7 +1,7 @@
 {
   "lastChangelogVersion": "1.0.0",
-  "defaultProvider": "opencode-go",
-  "defaultModel": "glm-5.3-flash",
+  "defaultProvider": "local",
+  "defaultModel": "GLM-5.3-Flash-EXL3",
   "packages": [
     "npm:pi-web-access",
     "../../Code/pi-subagents-herdr",
@@ -12,7 +12,7 @@
   "markdown": {
     "mermaid": "off"
   },
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "high",
   "tuiMode": "fullscreen",
   "imageDisplay": {
     "center": true,
