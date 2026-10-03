@@ -14,7 +14,6 @@ dotfiles/
 ├── btop/         → ~/.config/btop/btop.conf
 ├── cava/         → ~/.config/cava/config
 ├── claude/       → ~/.claude/settings.json
-├── codex/        → ~/.codex/config.toml
 ├── condarc/      → ~/.condarc
 ├── deskflow/     → ~/.config/Deskflow/{Deskflow.conf,deskflow-server.conf}
 ├── fcitx5/       → ~/.config/fcitx5/{config,profile,conf/*.conf}
@@ -56,7 +55,7 @@ brew bundle --file=~/Code/dotfiles/Brewfile   # tools first (kitty/zed via cask)
 ./setup.sh -y
 ```
 
-CLI agents (pi, claude, codex, ...) install via their own channels. macOS's built-in zsh (5.9) is used as-is — no `brew zsh` or `chsh` needed. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
+CLI agents (pi, claude, ...) install via their own channels. macOS's built-in zsh (5.9) is used as-is — no `brew zsh` or `chsh` needed. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
 
 ## Manual stow usage
 
@@ -83,7 +82,6 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `git` | Git settings, conventional commit template, global ignore |
 | `pi` | pi coding agent: global `AGENTS.md`, `settings.json`, `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `models.json`/`auth.json`/`secrets/` stay machine-local |
 | `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
-| `codex` | Codex CLI config: model, personality, MCP servers. `auth.json` stays machine-local |
 | `kitty` | Kitty terminal config + ssh kitten + current theme |
 | `yazi` | File manager config, keymap, init.lua and vendored plugins |
 | `zed` | Zed editor settings + keymap |
