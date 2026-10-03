@@ -1,11 +1,12 @@
 {
-  "lastChangelogVersion": "0.87.1",
+  "lastChangelogVersion": "1.0.0",
   "defaultProvider": "opencode-go",
   "defaultModel": "glm-5.3-flash",
   "packages": [
     "npm:pi-web-access",
     "../../Code/pi-subagents-herdr",
-    "npm:pi-mcp-adapter"
+    "-npm:pi-mcp-adapter",
+    "../../Code/pi-claude-code-provider"
   ],
   "theme": "dark",
   "markdown": {
@@ -19,5 +20,8 @@
     "zoomScale": 0.6
   },
   "hideThinkingBlock": false,
-  "externalEditor": "vim"
+  "externalEditor": "vim",
+  "images": {
+    "blockImages": false
+  }
 }

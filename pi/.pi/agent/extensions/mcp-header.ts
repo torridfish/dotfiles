@@ -9,8 +9,15 @@
  * same 1-blank spacing as core sections, and included in the Ctrl+O
  * expand/collapse toggle.
  *
- * Pair with `settings.mcpFooterStatus: "off"` in mcp-adapter.json, which
- * clears the persistent footer status — MCP info then lives only here.
+ * v3 reads pi's NATIVE MCP config instead of the retired pi-mcp-adapter:
+ * - Server list from ~/.pi/agent/mcp.json (global) and .pi/mcp.json
+ *   (project, overrides same-name global entries), without servers marked
+ *   `enabled: false`.
+ * - Tool counts are live, from `pi.getAllTools()` grouped by the
+ *   `mcp__<server>` namespace the built-in MCP support registers — so they
+ *   reflect what actually connected this session, including servers added
+ *   via `pi.registerMcpServer()`. A server that hasn't finished connecting
+ *   at header-render time simply shows without a count.
  *
  * Failure modes are non-fatal: if the chunk can't be located or its shape
  * changed upstream, the extension degrades to a no-op.
@@ -57,15 +64,13 @@ function findInteractiveModeChunk(): string | undefined {
   return undefined;
 }
 
-// ── MCP data (mtime-cached reads) ──
+// ── MCP data (mtime-cached reads + live tool query) ──
 
 interface McpInfo {
-  /** Alphabetically sorted enabled server names. */
+  /** Alphabetically sorted enabled server names, project entries overriding global ones. */
   names: string[];
-  /** Tool counts from the adapter metadata cache, if present. */
-  toolCounts: Map<string, number>;
-  /** Path of the user-global adapter config, for the expanded view. */
-  configPath: string;
+  /** Defining config file and configured exposure per server, for the expanded view. */
+  sources: Map<string, { file: string; exposure?: string }>;
 }
 
 interface CachedRead<T> {
@@ -74,8 +79,8 @@ interface CachedRead<T> {
   data: T;
 }
 
-// Re-read when mtime changes so a mid-session adapter update (which refreshes
-// mcp-cache.json) is picked up on the next paint without polling.
+// Re-read when mtime changes so a mid-session mcp.json edit is picked up on
+// the next paint without polling.
 const fileCache = new Map<string, CachedRead<unknown>>();
 
 function readJsonCached(path: string): unknown {
@@ -93,28 +98,58 @@ function readJsonCached(path: string): unknown {
 }
 
 function getMcpInfo(): McpInfo | undefined {
-  const agentDir = getAgentDir();
-  const configPath = join(agentDir, "mcp-adapter.json");
-  const config = readJsonCached(configPath) as { mcpServers?: Record<string, any> } | undefined;
-  const cacheJson = readJsonCached(join(agentDir, "mcp-cache.json")) as
-    | { servers?: Record<string, { tools?: unknown[] }> }
-    | undefined;
+  const configFiles: Array<{ path: string; label: string }> = [
+    { path: join(getAgentDir(), "mcp.json"), label: "global" },
+  ];
+  const projectPath = join(process.cwd(), ".pi", "mcp.json");
+  try {
+    if (statSync(projectPath).isFile()) configFiles.push({ path: projectPath, label: "project" });
+  } catch {
+    /* no project config */
+  }
 
-  const servers = config?.mcpServers ?? {};
-  const names = Object.entries(servers)
-    // Server definitions are objects; disabled ones carry disabled: true.
-    .filter(([, def]) => def != null && def.disabled !== true)
-    .map(([name]) => name)
-    .sort((a, b) => a.localeCompare(b));
-  if (names.length === 0) return undefined;
-
-  const toolCounts = new Map<string, number>();
-  if (cacheJson?.servers) {
-    for (const [name, entry] of Object.entries(cacheJson.servers)) {
-      if (Array.isArray(entry?.tools)) toolCounts.set(name, entry.tools.length);
+  // Project entries replace global entries with the same name (native rule).
+  const servers = new Map<string, { file: string; exposure?: string }>();
+  for (const { path, label } of configFiles) {
+    const config = readJsonCached(path) as { mcpServers?: Record<string, any> } | undefined;
+    for (const [name, def] of Object.entries(config?.mcpServers ?? {})) {
+      if (def == null || def.enabled === false || def.disabled === true) continue;
+      servers.set(name, {
+        file: `${path} (${label})`,
+        exposure: typeof def.exposure === "string" ? def.exposure : undefined,
+      });
     }
   }
-  return { names, toolCounts, configPath };
+  if (servers.size === 0) return undefined;
+
+  const names = [...servers.keys()].sort((a, b) => a.localeCompare(b));
+  return { names, sources: servers };
+}
+
+// ── Live tool counts (query the running session, not a cache file) ──
+
+// Set in the extension entry so render-time code can ask pi what actually
+// connected. MCP tools are registered as `mcp__<server>__<tool>` with a
+// namespace named exactly `mcp__<server>`.
+let liveApi: { getAllTools(): Array<{ name?: string; namespace?: { name?: string } }> } | undefined;
+
+function countTools(server: string): number | undefined {
+  if (!liveApi || typeof liveApi.getAllTools !== "function") return undefined;
+  let tools: Array<{ name?: string; namespace?: { name?: string } }>;
+  try {
+    tools = liveApi.getAllTools();
+  } catch {
+    return undefined;
+  }
+  const ns = `mcp__${server}`;
+  const prefix = `${ns}__`;
+  let count = 0;
+  for (const tool of tools) {
+    if (tool?.namespace?.name === ns || (!tool?.namespace?.name && typeof tool?.name === "string" && tool.name.startsWith(prefix))) {
+      count++;
+    }
+  }
+  return count;
 }
 
 // ── Theme (pi shares its Theme instance via globalThis across loaders) ──
@@ -140,7 +175,7 @@ function makeMcpSection(info: McpInfo, initialExpanded: boolean) {
     return typeof t?.fg === "function" ? t.fg("dim", s) : s;
   };
   const formatServer = (name: string) => {
-    const tools = info.toolCounts.get(name);
+    const tools = countTools(name);
     return tools ? `${name} (${tools} tools)` : name;
   };
   return {
@@ -150,7 +185,16 @@ function makeMcpSection(info: McpInfo, initialExpanded: boolean) {
     invalidate() {},
     render(_width: number): string[] {
       if (isExpanded) {
-        return [heading(), ...info.names.map((name) => dim(`  ${formatServer(name)} — ${info.configPath}`))];
+        return [
+          heading(),
+          ...info.names.map((name) => {
+            const source = info.sources.get(name);
+            const tools = countTools(name);
+            const parts = [tools !== undefined ? `${tools} tools` : undefined, source?.exposure].filter(Boolean);
+            const detail = parts.length > 0 ? ` (${parts.join(", ")})` : "";
+            return dim(`  ${name}${detail} — ${source?.file ?? "native mcp.json"}`);
+          }),
+        ];
       }
       // Compact: single line like core sections.
       return [heading(), dim(`  ${info.names.map(formatServer).join(", ")}`)];
@@ -209,6 +253,9 @@ function installPatch(Proto: any): boolean {
 // ── Extension entry ──
 
 export default function (pi: any) {
+  // Keep the ExtensionAPI around so section rendering can query the CURRENTLY
+  // connected MCP tools (getAllTools) instead of relying on a cache file.
+  liveApi = pi;
   // Factory runs before the first session init, so patching here guarantees
   // the first showLoadedResources call already appends [MCP]. Async factory
   // is fine: pi awaits it during extension loading.

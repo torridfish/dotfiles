@@ -1,0 +1,7 @@
+{
+  "models": {
+    "worker": "opencode-go/glm-5.3-flash",
+    "researcher": "claude-code/claude-opus-5-5",
+    "scout": "claude-code/claude-opus-5-5"
+  }
+}
