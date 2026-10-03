@@ -24,7 +24,7 @@ dotfiles/
 ├── pi/           → ~/.pi/agent/{settings.json,prompts,extensions}
 ├── ssh/          → ~/.ssh/config
 ├── starship/     → ~/.config/starship.toml
-├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,dsh-web,dsh-web-proxy,hermes-gateway}.service
+├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
 ├── tmux/         → ~/.config/tmux/tmux.conf
 ├── vim/          → ~/.config/vim/vimrc
 ├── yazi/         → ~/.config/yazi/{yazi.toml,keymap.toml,package.toml,init.lua,plugins/}
@@ -91,7 +91,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `deskflow` | Deskflow (Synergy) GUI + server screen layout. `tls/` stays machine-local |
 | `ssh` | SSH client config (host aliases only — no keys, no known_hosts). Repo copy should be `chmod 600` |
 | `condarc` | conda channels/priority |
-| `systemd-user` | Custom user units: deskflow-left-edge, dsh-web, dsh-web-proxy, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
+| `systemd-user` | Custom user units: deskflow-left-edge, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
 | `autostart` | XDG autostart desktop entries (deskflow, fcitx5, oxwu, syncthing) |
 | `starship` | Cross-shell prompt |
 | `tmux` | Terminal multiplexer config (TPM plugins auto-bootstrap on first run) |
