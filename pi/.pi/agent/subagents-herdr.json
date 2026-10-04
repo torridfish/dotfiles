@@ -1,7 +1,16 @@
 {
+  "backend": "auto",
+  "maxConcurrency": 4,
+  "masterRatio": 0.5,
+  "minPaneRows": 8,
   "models": {
     "worker": "opencode-go/glm-5.3-flash",
     "researcher": "claude-code/claude-opus-5-5",
     "scout": "claude-code/claude-opus-5-5"
+  },
+  "toolExtensions": {},
+  "inherit": {
+    "extensions": true,
+    "skills": false
   }
 }

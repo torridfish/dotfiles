@@ -4,8 +4,8 @@
   "defaultModel": "GLM-5.3-Flash-EXL3",
   "packages": [
     "npm:pi-web-access",
-    "../../Code/pi-subagents-herdr",
-    "../../Code/pi-claude-code-provider"
+    "git:github.com/torridfish/pi-subagents-herdr@v0.1.0",
+    "git:github.com/torridfish/pi-claude-code-provider@v0.1.0"
   ],
   "theme": "dark",
   "markdown": {
