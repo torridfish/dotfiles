@@ -1,11 +1,10 @@
 {
-  "lastChangelogVersion": "1.0.0",
+  "lastChangelogVersion": "1.0.2",
   "defaultProvider": "local",
   "defaultModel": "GLM-5.3-Flash-EXL3",
   "packages": [
     "npm:pi-web-access",
     "../../Code/pi-subagents-herdr",
-    "-npm:pi-mcp-adapter",
     "../../Code/pi-claude-code-provider"
   ],
   "theme": "dark",
@@ -23,5 +22,6 @@
   "externalEditor": "vim",
   "images": {
     "blockImages": false
-  }
+  },
+  "deviceId": "40dcc641-6672-4012-b2b6-564d766fa113"
 }
