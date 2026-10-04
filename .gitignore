@@ -1,4 +1,5 @@
 # Secrets — never track these even if they end up inside a package dir
+ssh/.ssh/config
 gh/.config/gh/hosts.yml
 zsh/secrets.zsh
 *.local

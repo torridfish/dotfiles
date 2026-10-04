@@ -21,7 +21,7 @@ dotfiles/
 ├── git/          → ~/.config/git/{config,commit-template,ignore}
 ├── kitty/        → ~/.config/kitty/{kitty.conf,ssh.conf,current-theme.conf}
 ├── pi/           → ~/.pi/agent/{settings.json,models.json,mcp.json,subagents-herdr.json,prompts,extensions}
-├── ssh/          → ~/.ssh/config
+├── ssh/          → ~/.ssh/config (untracked, in .gitignore — real hosts/IPs kept local)
 ├── starship/     → ~/.config/starship.toml
 ├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
 ├── tmux/         → ~/.config/tmux/tmux.conf
@@ -34,7 +34,7 @@ dotfiles/
 
 Intentionally **not** tracked: GNOME desktop settings (dconf database, binary — dump/load with `dconf`), `~/.claude.json` (mostly project state).
 
-**Note on granularity:** directories containing runtime artifacts (e.g. `gh/hosts.yml` with login tokens, `tmux/plugins/`, `btop/themes/`, fcitx5 caches) are **not** symlinked as a whole — only the actual config files are, so junk and secrets never end up in this repo.
+**Note on granularity:** directories containing runtime artifacts (e.g. `gh/hosts.yml` with login tokens, **`ssh/.ssh/config` with real hostnames/IPs**, `tmux/plugins/`, `btop/themes/`, fcitx5 caches) are **not** symlinked as a whole — only the actual config files are, so junk and secrets never end up in this repo.
 
 ## Quick start (new machine)
 
