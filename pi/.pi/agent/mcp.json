@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "computer-use": {
+      "command": "computer-use-linux",
+      "args": ["mcp"],
+      "exposure": "direct",
+      "timeout": 180
+    }
+  }
+}
