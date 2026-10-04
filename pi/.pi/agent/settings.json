@@ -5,7 +5,7 @@
   "packages": [
     "npm:pi-web-access",
     "git:github.com/torridfish/pi-subagents-herdr@v0.1.0",
-    "git:github.com/torridfish/pi-claude-code-provider@v0.1.1"
+    "git:github.com/torridfish/pi-claude-code-provider@v0.1.2"
   ],
   "theme": "dark",
   "markdown": {
