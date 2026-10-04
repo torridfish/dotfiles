@@ -157,6 +157,39 @@ backup_conflicts() {
 }
 
 # =============================================================================
+# Bootstrap pi local packages on fresh machines
+#
+# ~/.pi/agent/settings.json references pi-subagents-herdr and
+# pi-claude-code-provider by relative path (../../Code/<name>), so the repos
+# must be cloned into ~/Code before pi will load them.
+# =============================================================================
+bootstrap_pi() {
+    if ! command -v git >/dev/null 2>&1; then
+        print_warning "git not found; skipping pi package bootstrap"
+        return 0
+    fi
+    local code_dir="$HOME/Code"
+    local repos=(
+        "https://github.com/torridfish/pi-subagents-herdr.git"
+        "https://github.com/torridfish/pi-claude-code-provider.git"
+    )
+    mkdir -p "$code_dir"
+    local url name dest
+    for url in "${repos[@]}"; do
+        name="$(basename "$url" .git)"
+        dest="$code_dir/$name"
+        if [[ -d "$dest/.git" ]]; then
+            print_info "$name already cloned"
+        elif [[ -e "$dest" ]]; then
+            print_warning "$dest exists but is not a git repo; skipping $name"
+        else
+            print_info "Cloning pi package $name..."
+            git clone "$url" "$dest"
+        fi
+    done
+}
+
+# =============================================================================
 # Bootstrap TPM (tmux plugin manager) on fresh machines
 # =============================================================================
 bootstrap_tpm() {
@@ -228,6 +261,9 @@ main() {
         # shellcheck disable=SC2076
         if [[ " ${packages[*]} " =~ " tmux " ]]; then
             bootstrap_tpm
+        fi
+        if [[ " ${packages[*]} " =~ " pi " ]]; then
+            bootstrap_pi
         fi
         print_success "All packages stowed. Relaunch your shell / apps to pick up changes."
     else

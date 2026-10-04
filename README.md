@@ -20,7 +20,7 @@ dotfiles/
 ├── gh/           → ~/.config/gh/config.yml
 ├── git/          → ~/.config/git/{config,commit-template,ignore}
 ├── kitty/        → ~/.config/kitty/{kitty.conf,ssh.conf,current-theme.conf}
-├── pi/           → ~/.pi/agent/{settings.json,prompts,extensions}
+├── pi/           → ~/.pi/agent/{settings.json,models.json,mcp.json,subagents-herdr.json,prompts,extensions}
 ├── ssh/          → ~/.ssh/config
 ├── starship/     → ~/.config/starship.toml
 ├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
@@ -80,7 +80,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
 | `gh` | GitHub CLI aliases & preferences |
 | `git` | Git settings, conventional commit template, global ignore |
-| `pi` | pi coding agent: global `AGENTS.md`, `settings.json`, `/init` + `/review` prompt templates, `tok-speed-footer` extension (needs `npm install` in `~/.pi/agent/extensions/` once). `models.json`/`auth.json`/`secrets/` stay machine-local |
+| `pi` | pi coding agent: global `AGENTS.md`, `settings.json` (incl. package list), `models.json` (API key via `$VLLM_API_KEY`), `mcp.json`, `subagents-herdr.json`, `/init` + `/review` prompt templates, extensions. Local packages `pi-subagents-herdr` + `pi-claude-code-provider` are cloned into `~/Code/` by `setup.sh`; npm-declared packages are reconciled by pi itself (`pi update --extensions` to force). `auth.json`/`secrets/` stay machine-local |
 | `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
 | `kitty` | Kitty terminal config + ssh kitten + current theme |
 | `yazi` | File manager config, keymap, init.lua and vendored plugins |
