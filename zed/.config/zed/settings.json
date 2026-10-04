@@ -2671,6 +2671,11 @@
                 },
                 {
                     "paths": [
+                        "/home/torridfish/just3d"
+                    ]
+                },
+                {
+                    "paths": [
                         "/home/torridfish/rlm-attack"
                     ]
                 }
@@ -2693,6 +2698,11 @@
             "projects": [
                 {
                     "paths": [
+                        "/home/u1846522"
+                    ]
+                },
+                {
+                    "paths": [
                         "/work/u1846522/anypoint"
                     ]
                 }
@@ -2710,6 +2720,17 @@
                 {
                     "paths": [
                         "/home/torridfish/pandas"
+                    ]
+                }
+            ]
+        },
+        {
+            "host": "tuf",
+            "args": [],
+            "projects": [
+                {
+                    "paths": [
+                        "/home/torridfish/Code/seat-rental-bot"
                     ]
                 }
             ]
