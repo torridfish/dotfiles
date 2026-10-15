@@ -1,5 +1,5 @@
 [mgr]
-  ratio = [1, 2, 4]
+  ratio = [0, 1, 5]
   show_hidden = true
 
 [preview]
@@ -8,3 +8,8 @@
   image_filter = "lanczos3"
   image_quality = 75
   image_delay   = 30
+
+[plugin]
+  prepend_previewers = [
+    { url = "*.{md,markdown}", run = "mdcat-cached" },
+  ]
