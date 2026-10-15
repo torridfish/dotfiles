@@ -1,13 +1,11 @@
 [mgr]
   ratio = [0, 1, 5]
   show_hidden = true
-
+  show_symlink = false
+  linemode = "size"
 [preview]
-  max_width    = 600
-  max_height   = 900
-  image_filter = "lanczos3"
-  image_quality = 75
-  image_delay   = 30
+  max_width = 2000
+  max_height = 5000
 
 [plugin]
   prepend_previewers = [
