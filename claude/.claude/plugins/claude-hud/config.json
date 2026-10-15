@@ -1,0 +1,14 @@
+{
+  "lineLayout": "compact",
+  "pathLevels": "full",
+  "projectLineOrder": ["project", "model"],
+  "gitStatus": {
+    "enabled": false
+  },
+  "display": {
+    "showUsage": false
+  },
+  "colors": {
+    "project": "cyan"
+  }
+}
