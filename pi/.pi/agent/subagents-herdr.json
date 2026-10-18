@@ -5,7 +5,7 @@
   "minPaneRows": 8,
   "models": {
     "worker": "opencode-go/glm-5.3-flash",
-    "researcher": "claude-code/claude-opus-5-5",
+    "researcher": "opencode-go/glm-5.3-flash",
     "scout": "claude-code/claude-opus-5-5"
   },
   "toolExtensions": {},

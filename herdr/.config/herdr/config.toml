@@ -38,3 +38,7 @@ key = "prefix+m"
 type = "plugin_action"
 command = "local.remote-machine-toggle.open"
 description = "manage remote machines"
+
+[terminal]
+# Render pane images in Kitty graphics-compatible outer terminals.
+kitty_graphics = true

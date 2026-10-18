@@ -17,8 +17,30 @@
           "name": "GLM-5.3-Flash-EXL3",
           "reasoning": true,
           "input": ["text", "image"],
-          "contextWindow": 850000,
+          "contextWindow": 1048576,
           "maxTokens": 65535,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    },
+    "vllm-local": {
+      "baseUrl": "http://localhost:8000/v1",
+      "api": "openai-completions",
+      "apiKey": "$VLLM_API_KEY",
+      "authHeader": true,
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsUsageInStreaming": false,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "qwen3-8b",
+          "name": "Qwen3-8B (local vLLM)",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 32768,
           "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
         }
       ]

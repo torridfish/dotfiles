@@ -165,7 +165,5 @@ case ":$PATH:" in
 esac
 # pnpm end
 
-# mdcat: page through lessi (kitty/sixel-aware pager).
-# `mdcat -p` uses MDCAT_PAGER but strips images; `mdless` pipes full output so images survive.
-export MDCAT_PAGER="lessi"
-mdless() { mdcat --no-pager "$@" | lessi; }
+# mdcat: use lessi (kitty-graphics-aware pager) so `mdcat -p` keeps inline images
+export MDCAT_PAGER=lessi

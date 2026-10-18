@@ -1,5 +1,5 @@
 {
-  "lastChangelogVersion": "1.0.2",
+  "lastChangelogVersion": "1.3.0",
   "defaultProvider": "local",
   "defaultModel": "GLM-5.3-Flash-EXL3",
   "packages": [

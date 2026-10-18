@@ -8,6 +8,12 @@
 - Use conventional commit format to write up commit message.
 - When sharing a report with people outside this session, publish it as a secret gist (`gh gist create --secret`).
 
+## Papers
+- If user ask you to read paper, go fetch the latex source code to tmp folder first. 
+    - For arxiv, this is under `https://arxiv.org/src/xxxx`.
+    - If no source code exist, then go fetch html file.
+    - PDF is your last choice, do not read pdf first (e.g. `https://arxiv.org/pdf/xxxx`).
+
 ## Language
 - Default to English.
 - If the user's latest message is primarily in Chinese, reply in Traditional Chinese as used in Taiwan (zh-TW).

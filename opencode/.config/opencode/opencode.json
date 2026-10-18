@@ -5,7 +5,7 @@
   "provider": {
     "vllm": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "vllm1",
+      "name": "self-host",
       "options": {
         "baseURL": "https://api.torridfish.com/v1",
         "apiKey": "{env:VLLM_API_KEY}"
