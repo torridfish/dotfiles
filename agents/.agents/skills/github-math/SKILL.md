@@ -1,6 +1,6 @@
 ---
 name: github-math
-description: This skill should be used when writing or editing mathematical expressions in Markdown that will be rendered on GitHub — READMEs, issues, PR descriptions, discussions, gists, wikis, or release notes. Activates when the user asks about LaTeX math in .md files, GitHub math rendering problems (raw $...$, "macros are not allowed", "Unable to render expression"), choosing between ```math fences, $`...`$ inline math, and portable $...$/$$...$$ delimiters, using the xhub extension overlay (```katex fences, `$...$` code spans), or making formulas render correctly across GitHub, VS Code, Obsidian, and pandoc.
+description: This skill should be used when writing or editing mathematical expressions in Markdown that will be rendered on GitHub — READMEs, issues, PR descriptions, discussions, gists, wikis, or release notes. Activates when the user asks about LaTeX math in .md files, GitHub math rendering problems (raw $...$, "macros are not allowed", "Unable to render expression"), choosing between ```math fences, $`...`$ inline math, and portable $...$/$$...$$ delimiters, or making formulas render correctly across GitHub, VS Code, Obsidian, and pandoc.
 ---
 
 # Math that renders on GitHub
@@ -10,7 +10,7 @@ GitHub does not run LaTeX. Your formula goes through a pipeline, and each stage 
 ## The pipeline (why things break)
 
 1. **Markdown runs first.** GitHub's Markdown parser (cmark-gfm with a private math extension) processes your text *before* the math renderer sees it. Inside `$...$` and `$$...$$`, ordinary Markdown still applies: `_` and `*` can pair into `<em>` (pairing is paragraph-wide, so an opener in one formula can close in the next), a backslash before punctuation is an escape (`\{` becomes `{`, `\,` becomes `,`), `[a](b)` becomes a link, `<` glued to a character opens an HTML tag, a backtick opens a code span, a line starting with `-` or `*` starts a list, `~` can start strikethrough. If an HTML tag ends up inside the span, MathJax skips the whole span. Two syntaxes bypass this stage because they are *code* syntaxes: the fenced ```` ```math ```` block and the inline `` $`...`$ `` form. Their content reaches MathJax verbatim.
-2. **MathJax 3.2 runs in the browser** with a trimmed package set. The server wraps every detected span (`$...$`, `$$...$$`, ```` ```math ````) in a `<math-renderer>` stub element and the component typesets it client-side (verified 2026-10 via the `/markdown` API and README HTML — READMEs, issues and gists emit identical stubs) — Markdown-stage damage is already baked into the DOM, so no browser-side tool (extension, user script) can rescue a broken span; it can only re-render spans the server delivered intact. Loaded: base, ams, amscd, boldsymbol, braket, bussproofs, cancel, cases, centernot, color, empheq, enclose, extpfeil, gensymb, mathtools, mhchem, noundefined, textcomp, textmacros, unicode, upgreek, verb. Removed: `newcommand` (no `\newcommand`, `\def`, `\let`, `\renewcommand`, `\newenvironment`), `html` (no `\href`, `\class`, `\style`, `\cssId`), `bbox`, `action`, `require` (so no `\require{physics}` or any on-demand package), `colortbl`, `noerrors` (syntax errors show a red error box). An undefined macro renders as red text and the rest of the block survives. Anything that is LaTeX-but-not-MathJax (`tabular`, TikZ, `\usepackage`, `\includegraphics`, `\label`/`\ref` across blocks, `\cite`) never worked in Markdown math anywhere.
+2. **MathJax 3.2 runs in the browser** with a trimmed package set. Loaded: base, ams, amscd, boldsymbol, braket, bussproofs, cancel, cases, centernot, color, empheq, enclose, extpfeil, gensymb, mathtools, mhchem, noundefined, textcomp, textmacros, unicode, upgreek, verb. Removed: `newcommand` (no `\newcommand`, `\def`, `\let`, `\renewcommand`, `\newenvironment`), `html` (no `\href`, `\class`, `\style`, `\cssId`), `bbox`, `action`, `require` (so no `\require{physics}` or any on-demand package), `colortbl`, `noerrors` (syntax errors show a red error box). An undefined macro renders as red text and the rest of the block survives. Anything that is LaTeX-but-not-MathJax (`tabular`, TikZ, `\usepackage`, `\includegraphics`, `\label`/`\ref` across blocks, `\cite`) never worked in Markdown math anywhere.
 3. **GitHub adds its own guards.** A macro blocklist replaces the *entire* expression with "The following macros are not allowed: …". `\operatorname` and `\operatorname*` are confirmed members; `\phantom`/`\hphantom`/`\vphantom`, `\DeclareMathOperator`, `\definecolor`, `\colorbox`, `\fcolorbox` and `\DeclarePairedDelimiter` have been reported. Size limits produce "Unable to render expression": roughly 1000 braces or macros in one expression, 50 or more `\color` calls in one block, `\rule`, and very many heavy expressions on one page.
 
 Everything below is the practical consequence of those three facts.
@@ -24,8 +24,6 @@ Ask where the text will be *read*, not where it is stored.
 **Portable mode** — a README or docs `.md` that people also open in VS Code, Obsidian, pandoc, MkDocs/Hugo, Jupyter or a paper pipeline; or the user asks for "standard LaTeX"; or the file already uses `$`/`$$` throughout and you are editing a small part. Use `$...$` and `$$...$$` but steer around the Markdown hazards below. The `` $`...`$ `` form shows literal backticks in other renderers, so avoid it here. A ```` ```math ```` fence degrades gracefully everywhere (other renderers show a readable code block with the TeX source), so it stays acceptable for a display block whose hazards cannot be rewritten away.
 
 If a repo `.md` could go either way and the user is present, ask once. If nobody is there to ask, default README/docs to portable and everything else to GitHub-only, and say which you chose.
-
-An optional overlay for GitHub-only mode: the **xhub** browser extension adds two KaTeX-only syntaxes (see "xhub dual-track" in Step 2). It never repairs native failures — Markdown-stage damage and the macro blocklist still apply to every reader without it.
 
 ## Step 2: write with the right delimiters
 
@@ -49,7 +47,7 @@ Inside these two forms you may use `\{`, `\}`, `\,`, `\;`, `_` after `}`, mid-li
 
 ### Portable mode
 
-Inline: `$...$` with the dollars hugging the content (`$x$`, never `$ x $`). The closing `$` must not be followed by a letter or digit — write `$n$-th`, not `$n$th` — and the opening `$` must not be *preceded* by a letter, digit, CJK character, or full-width punctuation: `x$x$`, `7$x$` and `：$x$` (full-width colon) all render as raw text, because CJK characters and full-width punctuation count as word characters (observed live 2026-10: a formula directly after a full-width `：` stayed raw while the next `$...$` in the same line rendered); put a space before the `$` or use `` $`...`$ ``. `$5 and $10` is currency, not math. Display: `$$` alone on a line, the content on its own lines, `$$` alone on a line, with a blank line before the block (GitHub requires the line break in `.md` files), after it, and between two consecutive blocks (otherwise GitHub merges them). GitHub recognizes only dollar delimiters: `\(...\)` and `\[...\]` are not math on GitHub.
+Inline: `$...$` with the dollars hugging the content (`$x$`, never `$ x $`). The closing `$` must not be followed by a letter or digit — write `$n$-th`, not `$n$th` — and `$5 and $10` is currency, not math. Display: `$$` alone on a line, the content on its own lines, `$$` alone on a line, with a blank line before the block (GitHub requires the line break in `.md` files), after it, and between two consecutive blocks (otherwise GitHub merges them). GitHub recognizes only dollar delimiters: `\(...\)` and `\[...\]` are not math on GitHub.
 
 Then avoid the hazards. Each row is a pattern that breaks on GitHub and a rewrite that is still standard LaTeX:
 
@@ -67,26 +65,14 @@ Then avoid the hazards. Each row is a pattern that breaks on GitHub and a rewrit
 | backtick inside math | opens a code span | `\texttt{...}` or avoid |
 | `~` as a non-breaking space | GFM strikethrough accepts single tildes | `\ ` or `\quad` |
 | a continuation line in `$$` starting with `-` `+` `*` `>` `#` | starts a list, quote or heading and splits the block | end the previous line with the operator, or begin the line with `&` or `\quad` |
-| a word character glued to the opening `$`: `x$x$`, `7$x$`, `：$x$` (CJK characters and full-width punctuation count as word characters) | the parser refuses to open the span; the whole `$...$` shows as raw text | a space (or line start) before the `$`, or `` $`...`$ `` |
 | a literal `$` in prose on the same line as math | confuses GitHub's dollar pairing | wrap it: `<span>$</span>5` |
 | a bare pipe character inside inline math in a table cell | the table splitter runs first and splits the cell | `\vert`, `\mid`, `\lvert x \rvert` |
 
 Context hazards apply to both modes: math inside link text, footnotes, headings, `**bold**` or `*italic*` runs, or raw HTML blocks (`<div>`, `<p>`, `<td>`) is not rendered or renders partially. A `$$` block inside `<details>` fails while ```` ```math ```` and inline forms work. A multi-line `$$` block inside a list item is unreliable; use an indented ```` ```math ```` fence there.
 
-### xhub dual-track (optional extension overlay)
-
-The [xhub](https://github.com/nschloe/xhub) Chrome extension layers a second renderer on top of native output (its content script matches `https://github.com/*` only — not gists). It hooks exactly the two constructs the server delivers intact as code, so native rendering is never replaced, only supplemented:
-
-- A ```` ```katex ```` fenced block — GitHub does not know the `katex` info string and emits `<pre lang="katex">` verbatim; xhub swaps in KaTeX display math. Readers without the extension see a readable code block with the TeX source.
-- An inline code span whose content starts and ends with `$` — `` `$x^2$` `` with the backticks outside the dollars. xhub renders the inside with KaTeX; everyone else sees inline code.
-
-```` ```math ```` fences and `` $`...`$ `` are invisible to xhub: the server has already converted them into `<math-renderer>` stubs, so no code element survives to hook, and all readers see the same native rendering (this is why xhub's own docs call the GitLab-style dollar order unreliable).
-
-Use the overlay as an escape hatch for the macro blocklist: `\operatorname` renders fine under KaTeX in a ```` ```katex ```` fence (verified 2026-10 with a live test matrix on a test repo), while the ```` ```math ```` version of the same formula shows every reader the red blocklist box. Degradation for non-extension readers is graceful — clean TeX source, not an error. The ceiling is unchanged: TikZ fails under KaTeX too; pre-render those to SVG images. Keep the Step 3 substitutions as the default, because you write for readers you cannot assume have the extension.
-
 ## Step 3: use only macros GitHub has
 
-These substitutions are needed in **both** modes. (The xhub overlay in Step 2 renders blocklisted macros for extension users; the substitutions below remain the default because you cannot assume readers installed it.)
+These substitutions are needed in **both** modes.
 
 | You would write in LaTeX | On GitHub | Write instead |
 |---|---|---|
@@ -103,7 +89,7 @@ These substitutions are needed in **both** modes. (The xhub overlay in Step 2 re
 | `\label` with `\ref` or `\eqref` | labels do not survive across blocks | number by hand with `\tag{1}` and say "(1)" in prose |
 | `\begin{tabular}`, TikZ, `\includegraphics`, `\usepackage`, `\cite` | not math; never supported | a Markdown table, an image, or `\begin{array}{cc}` |
 
-Available and safe: `\mathbb \mathcal \mathscr \mathfrak \mathrm \mathbf \boldsymbol \mathtt \text`, `\frac \dfrac \tfrac \binom \sqrt[n]{}`, `\sum \prod \int \oint \bigcup`, `\left \right \bigl \Bigr`, `\overset \underset \stackrel \xrightarrow[below]{above} \xleftarrow`, `\substack`, `\begin{cases}`, `aligned`, `gathered`, `pmatrix bmatrix vmatrix Vmatrix smallmatrix array`, `\tag{}`, `\coloneqq` and the other mathtools symbols, `\bra \ket \braket \Braket`, `\ce{H2O}`, `\cancel \bcancel \xcancel`, `\boxed`, `\color`, `\enclose`, `\upalpha`, `\unicode{x1D4D0}`, `\mathstrut`, `\mathop \mathrel \mathbin`, `\limits \nolimits`, `\displaystyle`. For multi-line display math prefer `aligned` inside the block over a top-level `align`; it behaves the same on GitHub and also works in KaTeX-based renderers. (A top-level `align` does render on GitHub — verified 2026-10 — but `aligned` remains the portable choice.)
+Available and safe: `\mathbb \mathcal \mathscr \mathfrak \mathrm \mathbf \boldsymbol \mathtt \text`, `\frac \dfrac \tfrac \binom \sqrt[n]{}`, `\sum \prod \int \oint \bigcup`, `\left \right \bigl \Bigr`, `\overset \underset \stackrel \xrightarrow[below]{above} \xleftarrow`, `\substack`, `\begin{cases}`, `aligned`, `gathered`, `pmatrix bmatrix vmatrix Vmatrix smallmatrix array`, `\tag{}`, `\coloneqq` and the other mathtools symbols, `\bra \ket \braket \Braket`, `\ce{H2O}`, `\cancel \bcancel \xcancel`, `\color`, `\enclose`, `\upalpha`, `\unicode{x1D4D0}`, `\mathstrut`, `\mathop \mathrel \mathbin`, `\limits \nolimits`, `\displaystyle`. For multi-line display math prefer `aligned` inside the block over a top-level `align`; it behaves the same on GitHub and also works in KaTeX-based renderers.
 
 ## Step 4: keep expressions small
 
@@ -136,7 +122,6 @@ Then read the draft as the GitHub parser would: can any `_` or `*` pair up acros
 | a red macro name inside the formula | macro not in GitHub's MathJax package set | substitute per Step 3 |
 | "Unable to render expression" | size limit, `\rule`, or too many `\color` | split the block, remove `\rule`, reduce color |
 | renders on the web but not in the GitHub mobile app or in email | those surfaces have no math renderer | nothing to fix; keep the prose readable without the formula |
-| math renders for you but collaborators see a code block | you used xhub-only syntax (```` ```katex ```` fence or `` `$...$` ``) | rewrite with the Step 3 substitutions or ```` ```math ```` if all readers must see math |
 
 ## Worked example
 
