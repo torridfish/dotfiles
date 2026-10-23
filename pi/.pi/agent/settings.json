@@ -1,7 +1,7 @@
 {
-  "lastChangelogVersion": "1.3.0",
-  "defaultProvider": "local",
-  "defaultModel": "GLM-5.3-Flash-EXL3",
+  "lastChangelogVersion": "1.4.0",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "deepseek-v4.1-flash",
   "packages": [
     "npm:pi-web-access",
     "git:github.com/torridfish/pi-subagents-herdr@v0.1.0",

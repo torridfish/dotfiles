@@ -4,9 +4,9 @@
   "masterRatio": 0.5,
   "minPaneRows": 8,
   "models": {
-    "worker": "opencode-go/glm-5.3-flash",
-    "researcher": "opencode-go/glm-5.3-flash",
-    "scout": "claude-code/claude-opus-5-5"
+    "worker": "opencode-go/deepseek-v4.1-flash",
+    "researcher": "opencode-go/deepseek-v4.1-flash",
+    "scout": "opencode-go/deepseek-v4.1-flash"
   },
   "toolExtensions": {},
   "inherit": {
