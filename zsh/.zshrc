@@ -144,9 +144,16 @@ alias kssh='kitten ssh'
 alias ssh256='TERM=xterm-256color command ssh'
 
 # Install kitty terminfo on a remote, once. Fixes plain ssh/scp/tmux.
+#   usage: kitty-terminfo <ssh-host> [<remote-home>]
+# RemoteCommand=none: hosts with a RemoteCommand in ~/.ssh/config would
+#   otherwise ignore the command. <remote-home>: needed when the host's login
+#   RemoteCommand overrides HOME (ncurses reads $HOME/.terminfo), e.g.
+#   kitty-terminfo trdc01 /mnt/home/assume0701/torridfish
 kitty-terminfo() {
+  local host=$1 home=${2:-}
   infocmp -a xterm-kitty |
-    command ssh "$1" 'mkdir -p ~/.terminfo && tic -x -o ~/.terminfo /dev/stdin'
+    command ssh -o RemoteCommand=none "$host" \
+      "H=${home:-\$HOME}; mkdir -p \"\$H/.terminfo\" && tic -x -o \"\$H/.terminfo\" /dev/stdin"
 }
 
 rcopy() {  
