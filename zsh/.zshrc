@@ -174,3 +174,6 @@ esac
 
 # mdcat: use lessi (kitty-graphics-aware pager) so `mdcat -p` keeps inline images
 export MDCAT_PAGER=lessi
+
+# agy: auto-approve all tool permissions by default (use `command agy` to bypass)
+alias agy='agy --dangerously-skip-permissions'
