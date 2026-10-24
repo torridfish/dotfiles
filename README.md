@@ -17,6 +17,7 @@ dotfiles/
 ├── condarc/      → ~/.condarc
 ├── deskflow/     → ~/.config/Deskflow/{Deskflow.conf,deskflow-server.conf}
 ├── fcitx5/       → ~/.config/fcitx5/{config,profile,conf/*.conf}
+├── gemini/       → ~/.gemini/GEMINI.md (symlink to agent/.agent/AGENTS.md, for agy)
 ├── gh/           → ~/.config/gh/config.yml
 ├── git/          → ~/.config/git/{config,commit-template,ignore}
 ├── kitty/        → ~/.config/kitty/{kitty.conf,ssh.conf,current-theme.conf}
@@ -82,6 +83,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `git` | Git settings, conventional commit template, global ignore |
 | `pi` | pi coding agent: global `AGENTS.md`, `settings.json` (package list pins `pi-subagents-herdr` + `pi-claude-code-provider` to git tag `v0.1.0`), `models.json` (API key via `$VLLM_API_KEY`), `mcp.json`, `subagents-herdr.json` (user-level config layer), `/init` + `/review` prompt templates, extensions. Packages install via pi itself (`pi update --extensions` to reconcile); to hack on a package, clone it anywhere and run `pi -e <path>` for one invocation. `auth.json`/`secrets/` stay machine-local |
 | `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
+| `gemini` | Antigravity (agy) global rules: `~/.gemini/GEMINI.md` is a symlink to the shared `agent/.agent/AGENTS.md`. Everything else in `~/.gemini/` (auth, `antigravity*/`, settings) stays machine-local |
 | `kitty` | Kitty terminal config + ssh kitten + current theme |
 | `yazi` | File manager config, keymap, init.lua and vendored plugins |
 | `zed` | Zed editor settings + keymap |
