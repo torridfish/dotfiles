@@ -332,6 +332,15 @@ function slideTypes(md) {
 
 module.exports = ({ marp }) => {
   marp.themeSet.add(theme());
+  // slides.sh --thanks: close the deck with a thanks page (the title-page layout); off by default
+  if (process.env.RS_THANKS) {
+    const parse = marp.markdown.parse.bind(marp.markdown);
+    // with headingDivider the # line starts its own slide; a --- as well would leave an empty slide between
+    marp.markdown.parse = (src, env) => {
+      const divided = /^\s*headingDivider:\s*[1-6]|<!--\s*headingDivider:\s*[1-6]/m.test(src);
+      return parse(`${src.replace(/\s*$/, '')}\n\n${divided ? '' : '---\n\n'}# ${process.env.RS_THANKS}\n`, env);
+    };
+  }
   return marp
     .use(require('markdown-it-footnote'))
     .use(require('markdown-it-mark'))

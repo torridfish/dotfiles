@@ -9,6 +9,8 @@ A deck is one Markdown file rendered by Marp in the `slide-maker` theme
 <skill-dir>/scripts/slides.sh deck.md --html           # one self-contained HTML file to present from
 <skill-dir>/scripts/slides.sh deck.md --pdf --watch    # rebuild on every save
 <skill-dir>/scripts/slides.sh deck.md --pptx -o out/   # another output folder
+<skill-dir>/scripts/slides.sh deck.md --thanks         # append a "Thanks for listening." page (off by default)
+<skill-dir>/scripts/slides.sh deck.md --thanks-text "Questions?"   # the same page with other words
 ```
 
 ## Front matter
@@ -50,8 +52,11 @@ Oct. 31, 2026
 
 [^kv]: Proposal should be scene-shared.               <- [1] Proposal … at the foot of this slide
 
-# Thanks for listening.      <- a last slide holding only a # line takes the title-page layout
 ```
+
+A thanks page is a build option, not part of the Markdown: `slides.sh --thanks` appends
+`# Thanks for listening.`, and a last slide holding only a `#` line takes the title-page layout.
+(Writing that line by hand works the same way.)
 
 Whole-slide classes go in a comment on a content slide: `<!-- _class: columns -->` (body blocks after the
 lead fill two columns in order; wrap several blocks in a `<div>` to keep them in one column),
@@ -114,7 +119,7 @@ Every anchor is a CSS variable in `:root` at the top of `assets/marp/slide-maker
 | `--column-width`, `--column-gap` | 437, 22 | the two columns |
 | `--run-label-height` | 22 | space a run label takes above its figure |
 | `--footnote-width` | 860 | widest a footnote line runs, from the left edge |
-| `--number-left`, `--number-top`, `--number-width`, `--number-height` | 900, 508, 50, 28 | the slide number |
+| `--number-right`, `--number-top`, `--number-height` | 16, 508, 28 | the slide number, right-aligned |
 | `--cover-title-*`, `--cover-sub-*` | | title-page title and subtitle (centred) |
 | `--section-title-*`, `--divider-*` | | section-page title; plain divider line |
 

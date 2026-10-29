@@ -42,7 +42,7 @@
   --column-width: 437px; --column-gap: 22px;
   --run-label-height: 22px;
   --footnote-width: 860px;                 /* the band below body-bottom, from the left edge */
-  --number-left: 900px; --number-top: 508px; --number-width: 50px; --number-height: 28px;
+  --number-right: 16px; --number-top: 508px; --number-height: 28px;   /* right-aligned, from the right edge */
   --cover-title-top: 230px; --cover-title-height: 80px;      /* title page: centred */
   --cover-sub-top: 420px; --cover-sub-height: 72px;
   --section-title-left: 33px; --section-title-top: 177px; --section-title-width: 895px; --section-title-height: 186px;
@@ -190,8 +190,8 @@ section > .footnotes {
 }
 section[data-marpit-pagination]::after {
   content: attr(data-marpit-pagination);
-  position: absolute; left: var(--number-left); top: var(--number-top); right: auto; bottom: auto; width: var(--number-width); height: var(--number-height);
-  display: flex; align-items: center; justify-content: center; padding: 0;
+  position: absolute; left: auto; right: var(--number-right); top: var(--number-top); bottom: auto; height: var(--number-height);
+  display: flex; align-items: center; justify-content: flex-end; padding: 0;
   font: var(--body-size) var(--serif); color: var(--ink);
 }
 
