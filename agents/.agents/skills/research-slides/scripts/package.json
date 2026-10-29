@@ -1,1 +1,1 @@
-{"name":"research-slides-scripts","private":true,"version":"1.0.0","description":"Deck builder for the Research Slides design system (pptxgenjs)","dependencies":{"carbon-now-cli":"^2.1.0","pptxgenjs":"3.12.0"}}
+{"name":"research-slides-scripts","private":true,"version":"1.0.0","description":"Deck builder for the Research Slides design system (pptxgenjs)","dependencies":{"@marp-team/marp-cli":"^4.5.1","carbon-now-cli":"^2.1.0","markdown-it-attrs":"^4.5.0","markdown-it-bracketed-spans":"^1.0.3","markdown-it-footnote":"^4.0.0","markdown-it-mark":"^4.0.0","pptxgenjs":"3.12.0"}}

@@ -37,7 +37,7 @@ deck.overlay(s, { x: 0.17, y: 2.66, w: 9.67, h: 0.42 });                 // peac
 deck.overlay(s, { x: 3.9, y: 3.95, w: 3.1, h: 0.2, tone: 'pink' });      // pink: the problem row
 ```
 
-Figure sizing: keep the aspect ratio; width ≤ 9.33 in, bottom ≤ `L.bodyBottom`. A draw.io export at scale 2 is 1:1 at `px/192` in; a 400-dpi TeX render at `px/400` in; a 2× Carbon image at `px/192` in.
+Figure sizing: keep the aspect ratio; width ≤ 9.33 in, bottom ≤ `L.bodyBottom`. A draw.io export at scale 2 is 1:1 at `px/192` in; an 800-dpi TeX render at `px/800` in; a 2× Carbon image at `px/192` in.
 
 ## TableSlide / ResultsTable
 
@@ -136,7 +136,7 @@ scripts/tex2img.sh --algo two-stage.body.tex -o 2026-11-05/math/two-stage
 ```js
 const m = deck.content({ title: 'Setup', topic: 'Training loss and the two-stage procedure',
   lead: ['The mask loss is averaged over the four decoder outputs; BCE and Dice are weighted 5 each.'] });
-deck.image(m, { path: 'math/loss.png', x: 0.43, y: 1.6, w: 3.64, h: 0.24 });            // px/400 in: 1:1 with 12pt
+deck.image(m, { path: 'math/loss.png', x: 0.43, y: 1.6, w: 3.64, h: 0.24 });            // px/800 in: 1:1 with 12pt
 deck.image(m, { path: 'math/two-stage.png', x: 0.43, y: 2.1, w: 4.88, h: 1.87 });
 ```
 

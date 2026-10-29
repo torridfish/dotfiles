@@ -14,7 +14,7 @@ const RT = process.env.RUN_TABLE_PNG || ''; // optional screenshot for the overl
   deck.pres.addSection({ title: 'Templates' });
   // 1 cover
   deck.cover({ title: 'Progress Report', project: 'Woven Anypoint Project', date: 'Oct. 28, 2026',
-    notes: 'CoverSlide: photo under veil (78% white), cover-title 26pt bold, cover-subtitle 14pt bold Times New Roman in ink-muted. Date form: Oct. 28, 2026. No slide number.' });
+    notes: 'CoverSlide: photo under veil (78% white), cover-title 26pt bold, cover-subtitle 14pt bold Arial in ink-muted. Date form: Oct. 28, 2026. No slide number.' });
   // 2 photo section
   deck.section({ title: 'Experiment: Does KV cache help?', footnotes: [[marker('*1'), ' Link: ', link('https://github.com/torridfish/just3d/issues/17')]],
     notes: 'SectionSlide: the cover without the subtitle; title is the section question; optional footnote link to the tracking issue.' });
@@ -46,7 +46,7 @@ const RT = process.env.RUN_TABLE_PNG || ''; // optional screenshot for the overl
     notes: ['1 Recoverable to text through an auxiliary decoder (VQ-VAE / VAE decoder, SAE features), not directly readable.', '2 No native thought distribution; sampling can be bolted on afterwards.', '3 Heima ships an explainer that partially decodes its thinking tokens.', '4 CoLaR: latent head predicts a distribution over compressed embeddings.'] });
   // 8 paper slide
   s = deck.content({ title: 'Backbone sharing', topic: 'Transfusion', footnotes: [[marker('*1'), ' ', link('https://arxiv.org/pdf/2408.11039')]],
-    notes: "PaperSlide: area as title, paper as topic, typed-dash notes in Arial 12pt with a 0.075in inset, the paper's own figures in the body, arXiv link as *1. Figures never climb beside the title." });
+    notes: "PaperSlide: area as title, paper as topic, typed-dash notes in Times New Roman 12pt with a 0.075in inset, the paper's own figures in the body, arXiv link as *1. Figures never climb beside the title." });
   deck.notes(s, ['Share the transformer backbone between', ['- ', bold('autoregressive text generation')], ['- ', bold('image generation (denoising)'), ', modality-specific layers only at the input and output'], '- Our analogue: one backbone for the answer tokens and the latent thought, a head per modality'], { h: 1.2 });
   deck.figure(s, { path: A('Diagrams/anchorseg_arch.png'), x: 0.33, y: 2.45, w: 4.2, h: 2.75, name: 'Paper figure 1 (stand-in: draw.io export)' });
   deck.figure(s, { path: A('Diagrams/qwen_3d_architecture.png'), x: 4.78, y: 2.78, w: 4.88, h: 2.42, name: 'Paper figure 2 (stand-in: draw.io export)' });
@@ -108,7 +108,7 @@ const RT = process.env.RUN_TABLE_PNG || ''; // optional screenshot for the overl
   deck.overlay(s, { x: 0.17, y: 2.66, w: 9.67, h: 0.42 });
   deck.overlay(s, { x: 3.9, y: 3.95, w: 3.1, h: 0.2, tone: 'pink' });
   // 15 TODO
-  s = deck.content({ title: 'TODO', topic: 'Week of Oct. 13', notes: 'TodoSlide: title TODO, a dated dash list in Arial 12pt with a 0.075in inset; bold the blocking item; ➔ for what follows. No figure, no table.' });
+  s = deck.content({ title: 'TODO', topic: 'Week of Oct. 13', notes: 'TodoSlide: title TODO, a dated dash list in Times New Roman 12pt with a 0.075in inset; bold the blocking item; ➔ for what follows. No figure, no table.' });
   deck.notes(s, ['- 08/31 – 09/03: AMD HPC under maintenance', ['- ', bold('Summarize experiment results of the new VAE')], '    - Does the VAE form a space that is good for the FM model to generate?', '    - Does the backbone use the thoughts to solve the problem?', '- Error-case classification (thought / generated code)', '- Apply the new VAE with the pretrained flow_proj; ablate flow_proj', '➔ Faithfulness interpretability on HumanEval once the machine is back']);
   await deck.save(OUT);
   console.log('built', OUT);

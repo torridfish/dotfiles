@@ -26,8 +26,8 @@ Research Slides is the slide language of one researcher's decks: the weekly prog
 
 ## Type
 
-- Arial labels, Times New Roman explains, Courier New is code typed on the slide (prompt templates, inline chips). Do not add a fourth slide family; a pasted link in Meiryo is reset to Arial. Rendered pictures bring their own faces: Hack inside Carbon code images, Computer Modern inside rendered math and pseudocode.
-- The scale in PowerPoint points: `cover-title` 26 bold, `slide-title` 22, `topic` 12.5 in amber, `cover-subtitle` 14 bold serif, `prose` 13 serif, `lead` 12 serif, `body` 12, `run-label` 11.5 serif, `code` 10 mono, `table` 9, `caption` 8, `code-inline` 8, `table-dense` 8. Nothing on a slide is smaller than 8pt; a tree, a log or a table note that wants 6 or 7pt becomes a screenshot, a footnote link or an 8pt note.
+- Arial is for the title tier only: `cover-title`, `slide-title`, `topic`, `cover-subtitle` and the centred line of a plain divider. Times New Roman is every other word on the slide: `lead`, `prose`, `body`, `caption`, `table`, `table-dense`, `run-label` and `slide-number`. Courier New is code typed on the slide (prompt templates, inline chips). Do not add a fourth slide family; a pasted link in Meiryo is reset to the style of the text around it. Rendered pictures bring their own faces: Hack inside Carbon code images, Computer Modern inside rendered math and pseudocode.
+- The scale in PowerPoint points. Arial: `cover-title` 26 bold, `slide-title` 22, `topic` 12.5 in amber, `cover-subtitle` 14 bold. Times New Roman: `prose` 13, `lead` 12, `body` 12, `run-label` 11.5, `table` 9, `caption` 8, `table-dense` 8. Courier New: `code` 10, `code-inline` 8. Nothing on a slide is smaller than 8pt; a tree, a log or a table note that wants 6 or 7pt becomes a screenshot, a footnote link or an 8pt note.
 - `slide-title` is regular weight, `cover-title` is bold. Bold inside `body`, `prose`, `lead` and `code` marks the claim, the role label or the variable, never a whole paragraph.
 - Left-align everything except table cells, the slide number and the text of a plain divider, which are centred. Justify nothing. Line spacing 100%, paragraph spacing 0; add 12pt before a paragraph only to separate two blocks inside one text box.
 - Lists: a typed dash for flat observations and the lines of a reading page (a second level is two spaces and a dash), ➔ for consequences, 1. for ordered steps and findings with a. for sub-steps, and ● with ○ beneath it only for the nested outline of a review page; each level indents one `space-6`.
@@ -110,7 +110,7 @@ None on slides. The system uses no icon set and no pictograms; direction and sta
 
 ## Building a deck
 
-- Google Slides or PowerPoint, 16:9 at 10 × 5.625 in, theme fonts Arial for headings and body, colors as in `tokens.json`.
+- Google Slides or PowerPoint, 16:9 at 10 × 5.625 in, theme fonts Arial for headings and Times New Roman for body, colors as in `tokens.json`.
 - Start from the template layouts Cover, Section, Divider, Content and Content + lead in `research-slides-template.pptx`: duplicate the sample slide that matches the component you need and replace its content; figures, tables, columns and prose are composed on the Content layouts at the anchors above.
 - To have an agent build a deck, give it this system's link and, per slide, the category word, the topic line, the lead and the figure or table; it reads this README, places by the anchors, and draws every architecture figure from the kit in `assets/Diagrams/` before exporting it.
 - Before placing a figure: edit or copy its `.drawio`, export with the command under Diagrams, put the PNG on the slide and keep the source beside it. Equations, pseudocode and code go the same way through the `research-slides` skill's `tex2img.sh` and `code2img.sh`, source beside export under `assets/Math/` and `assets/Code/`.

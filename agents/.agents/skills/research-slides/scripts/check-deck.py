@@ -11,7 +11,7 @@ each slide's title/topic present on content slides. Rendering (soffice --headles
 pdftoppm) is how an agent without a slide viewer LOOKS at the result: open the PNGs and read them
 as the audience would. python-pptx: `pip install python-pptx` or `uv run --with python-pptx`.
 """
-import sys, os, shutil, subprocess, argparse, glob
+import sys, os, re, shutil, subprocess, argparse, glob
 
 W_IN, H_IN = 10.0, 5.625
 EMU = 914400
@@ -71,13 +71,31 @@ def structural(path):
     print("structural: OK" if problems == 0 else f"structural: {problems} problem(s)")
     return problems
 
+VERSIONED = re.compile(r'^libreoffice(\d+(?:\.\d+)*)$')  # libreoffice25.8, libreoffice26.8, ...
+
+def versioned_soffice():
+    """Every versioned LibreOffice on PATH or under /opt, newest first: [(version tuple, path)]."""
+    found = {}
+    for d in os.environ.get('PATH', '').split(os.pathsep) + ['/opt']:
+        try: names = os.listdir(d)
+        except OSError: continue
+        for n in names:
+            m = VERSIONED.match(n)
+            if not m: continue
+            p = os.path.join(d, n, 'program', 'soffice') if d == '/opt' else os.path.join(d, n)
+            if os.path.isfile(p) and os.access(p, os.X_OK):
+                found.setdefault(tuple(int(x) for x in m.group(1).split('.')), p)
+    return sorted(found.items(), reverse=True)
+
 def find_soffice():
-    """PATH first, then the official /opt build, distro paths, the macOS app, then a flatpak wrapper."""
+    """PATH first (soffice, libreoffice, then the newest libreoffice<version>), the official /opt build,
+    distro paths, the macOS app, then a flatpak wrapper."""
     for name in ('soffice', 'libreoffice'):
         p = shutil.which(name)
         if p: return p
-    cands = sorted(glob.glob('/opt/libreoffice*/program/soffice'), reverse=True) + sorted(glob.glob('/usr/bin/libreoffice*')) + [
-        '/usr/lib/libreoffice/program/soffice', '/usr/lib64/libreoffice/program/soffice',
+    v = versioned_soffice()
+    if v: return v[0][1]
+    cands = ['/usr/lib/libreoffice/program/soffice', '/usr/lib64/libreoffice/program/soffice',
         '/Applications/LibreOffice.app/Contents/MacOS/soffice', 'C:/Program Files/LibreOffice/program/soffice.exe']
     for c in cands:
         if os.path.isfile(c) and os.access(c, os.X_OK): return c

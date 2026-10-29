@@ -21,6 +21,8 @@ const T = { // tokens
   surfaceHead: 'D9D9D9', surfaceHeadBlue: 'D1E0F9', bandBlue: 'CFE2F3', bandOrange: 'FCE5CD',
   overlayPeach: 'FFDC9F', overlayPink: 'FFACAC',
 };
+// Faces: Arial on the title tier only (slide title, topic, cover title and subtitle, divider line);
+// every other word on a slide is Times New Roman; Courier New is code typed on the slide.
 const F = { sans: 'Arial', serif: 'Times New Roman', mono: 'Courier New' };
 const INS = 7.2, INS_BODY = 5.4; // text insets in points: space-2 (0.1in) and inset-body (0.075in)
 const L = { // layout anchors (in)
@@ -50,19 +52,19 @@ const BOX = {
   title: { x: L.headerLeft, y: L.titleTop, w: 9.2, h: 0.45, fontSize: 22, bold: false, fontFace: F.sans, color: T.ink, align: 'left', valign: 'top', margin: 0, isTextBox: true, objectName: 'Title' },
   topic: { x: L.headerLeft, y: L.topicTop, w: 9.2, h: 0.30, fontSize: 12.5, fontFace: F.sans, color: T.amber, align: 'left', valign: 'top', margin: 0, isTextBox: true, objectName: 'Topic' },
   lead: { x: L.margin, y: L.leadTop, w: 9.33, h: 0.61, fontSize: 12, fontFace: F.serif, color: T.ink, align: 'left', valign: 'top', margin: INS, isTextBox: true, objectName: 'Lead' },
-  foot: { x: 0, y: L.footTop, w: 8.6, h: 0.39, fontSize: 8, fontFace: F.sans, color: T.ink, align: 'left', valign: 'middle', margin: INS, isTextBox: true, objectName: 'Footnote' },
+  foot: { x: 0, y: L.footTop, w: 8.6, h: 0.39, fontSize: 8, fontFace: F.serif, color: T.ink, align: 'left', valign: 'middle', margin: INS, isTextBox: true, objectName: 'Footnote' },
   coverTitle: { x: 0.34, y: 1.84, w: 9.32, h: 1.94, fontSize: 26, bold: true, fontFace: F.sans, color: T.ink, align: 'left', valign: 'middle', margin: 0, isTextBox: true, objectName: 'Cover title' },
-  coverSub: { x: 0.36, y: 4.34, w: 9.32, h: 1.0, fontSize: 14, bold: true, fontFace: F.serif, color: T.inkMuted, align: 'left', valign: 'middle', margin: 0, isTextBox: true, objectName: 'Cover subtitle' },
+  coverSub: { x: 0.36, y: 4.34, w: 9.32, h: 1.0, fontSize: 14, bold: true, fontFace: F.sans, color: T.inkMuted, align: 'left', valign: 'middle', margin: 0, isTextBox: true, objectName: 'Cover subtitle' },
   divider: { x: L.margin, y: L.dividerTop, w: 9.33, h: 0.48, fontSize: 22, bold: false, fontFace: F.sans, color: T.ink, align: 'center', valign: 'top', margin: 2.7, isTextBox: true, objectName: 'Divider' },
 };
 
 function create({ title = 'Research Slides deck', author = '', subject = '' } = {}) {
   const pres = new pptxgen();
   pres.layout = 'LAYOUT_16x9';
-  pres.theme = { headFontFace: F.sans, bodyFontFace: F.sans };
+  pres.theme = { headFontFace: F.sans, bodyFontFace: F.serif };
   pres.title = title; if (author) pres.author = author; if (subject) pres.subject = subject;
   const photo = path.join(ASSETS, 'cover-temple-night.jpg');
-  const num = { slideNumber: { x: L.numberLeft, y: 5.28, w: 0.89, h: 0.30, fontSize: 12, fontFace: F.sans, color: T.ink, align: 'center', valign: 'middle', margin: [3.6, 7.2, 3.6, 7.2] } };
+  const num = { slideNumber: { x: L.numberLeft, y: 5.28, w: 0.89, h: 0.30, fontSize: 12, fontFace: F.serif, color: T.ink, align: 'center', valign: 'middle', margin: [3.6, 7.2, 3.6, 7.2] } };
   const veil = { rect: { x: 0, y: 0, w: L.width, h: L.height, fill: { color: 'FFFFFF', transparency: 22 }, line: { type: 'none' } } };
   const rule = { line: { x: L.headerLeft, y: L.ruleTop, w: 9.2, h: 0, line: { color: T.ink, width: 1 } } };
   pres.defineSlideMaster({ title: 'COVER', background: { path: photo }, objects: [veil] });
@@ -76,7 +78,7 @@ function create({ title = 'Research Slides deck', author = '', subject = '' } = 
 
   const deck = {
     pres, T, L, F, BOX,
-    /** Cover: photo under veil, 26pt bold title, serif project + date lines. */
+    /** Cover: photo under veil, 26pt bold title, 14pt bold Arial project + date lines in ink-muted. */
     cover({ title = 'Progress Report', project, date, notes }) {
       const s = pres.addSlide({ masterName: 'COVER' });
       s.addText(title, BOX.coverTitle);
@@ -124,20 +126,20 @@ function create({ title = 'Research Slides deck', author = '', subject = '' } = 
       const FILL = { ref: T.surfaceHead, a: T.bandBlue, b: T.bandOrange };
       const data = [header.map((t) => ({ text: t, options: { bold: true, fill: { color: T.surfaceHead } } }))];
       for (const r of rows) data.push(r.cells.map((t, i) => ({ text: String(t), options: Object.assign({}, FILL[r.role] ? { fill: { color: FILL[r.role] } } : {}, (r.best || []).includes(i) ? { bold: true } : {}) })));
-      s.addTable(data, { x, y, w, colW, fontSize, fontFace: F.sans, color: T.ink, align: 'center', valign: 'middle', border: { type: 'solid', pt: 0.75, color: T.ink }, margin: 0.03, objectName: name });
+      s.addTable(data, { x, y, w, colW, fontSize, fontFace: F.serif, color: T.ink, align: 'center', valign: 'middle', border: { type: 'solid', pt: 0.75, color: T.ink }, margin: 0.03, objectName: name });
       return s;
     },
     /** Settings / literature table: bold header on blue, 8pt, no bands; numbered notes beneath. */
     settingsTable(s, { header, rows, notes, x = 0.65, y = L.tableTop, w = 8.7, colW, centerCols = [], noteY }) {
       const data = [header.map((t) => ({ text: t, options: { bold: true, fill: { color: T.surfaceHeadBlue }, align: 'left' } }))];
       for (const r of rows) data.push(r.map((t, i) => ({ text: String(t), options: { align: centerCols.includes(i) ? 'center' : 'left' } })));
-      s.addTable(data, { x, y, w, colW, fontSize: 8, fontFace: F.sans, color: T.ink, valign: 'middle', border: { type: 'solid', pt: 0.75, color: T.ink }, margin: 0.03, objectName: 'Settings' });
-      if (notes && notes.length) s.addText(lines(notes), { x, y: noteY || y + 0.3 * (rows.length + 1) + 0.15, w, h: 0.2 * notes.length + 0.1, fontSize: 8, fontFace: F.sans, color: T.inkMuted, valign: 'top', margin: 0, isTextBox: true, objectName: 'Table notes' });
+      s.addTable(data, { x, y, w, colW, fontSize: 8, fontFace: F.serif, color: T.ink, valign: 'middle', border: { type: 'solid', pt: 0.75, color: T.ink }, margin: 0.03, objectName: 'Settings' });
+      if (notes && notes.length) s.addText(lines(notes), { x, y: noteY || y + 0.3 * (rows.length + 1) + 0.15, w, h: 0.2 * notes.length + 0.1, fontSize: 8, fontFace: F.serif, color: T.inkMuted, valign: 'top', margin: 0, isTextBox: true, objectName: 'Table notes' });
       return s;
     },
-    /** Notes block: 12pt Arial lines (typed dashes / ➔ / 1.) with the body inset; items are strings or run arrays. */
+    /** Notes block: 12pt Times New Roman lines (typed dashes / ➔ / 1.) with the body inset; items are strings or run arrays. */
     notes(s, items, { x = L.margin, y = L.leadTop, w = 9.33, h = 2.4 } = {}) {
-      s.addText(lines(items), { x, y, w, h, fontSize: 12, fontFace: F.sans, color: T.ink, valign: 'top', margin: INS_BODY, isTextBox: true, objectName: 'Notes' });
+      s.addText(lines(items), { x, y, w, h, fontSize: 12, fontFace: F.serif, color: T.ink, valign: 'top', margin: INS_BODY, isTextBox: true, objectName: 'Notes' });
       return s;
     },
     /** Prose block: 13pt Times New Roman paragraphs for a discussion page. */
