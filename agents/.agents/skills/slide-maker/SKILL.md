@@ -25,8 +25,9 @@ Use what md2s offers. When a slide needs a layout or a mark it does not have, sa
 ## Writing conventions
 
 - A weekly deck runs title page → (section page → content slides)* → TODO, twelve to twenty-five content slides, one message per slide. Add a closing thanks page at build time with `md2s --thanks` when the talk wants one; it is not written in the Markdown. A slide that cannot be named by a title and a subtitle is two slides.
+- Headings have three jobs. `#` alone is a section page: a chapter of the talk, usually the question its slides answer. `##` is the slide's category, a label from the list below that repeats from slide to slide. `###` is the slide's title, its one message. The contents slide lists sections with their slides' `###`; the categories in `toc-standalone` (TODO, Appendix, References, set in `config.yaml` here) stand apart at the end, so a closing TODO slide needs no section of its own.
 - Slides that share a title write the `##` once and start each slide with its `###`; a subsection that runs over continues after a `---`, which repeats the `##` and `###` and numbers the parts (1/2), (2/2). Set `toc: true` for a contents slide after the title page.
-- The title (`##`) is the category of the slide, a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period.
+- The category (`##`) is a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period.
 - The lead (`>`) states the claim or the question in one or two sentences; bold the one term the slide turns on.
 - Name runs by their ID and use it as a noun: 2-92, 4-00, 4-03. A run ID above a figure is the image title (`![](f.png "4-03")`); one called out in text is `[4-03]{.callout}`. Tables of runs use the `role` column (`ref`, `a`, `b`) to tint the reference and the two groups.
 - Papers are cited, not footnoted: keep a `refs.bib` beside the deck (exported from the user's reference manager, or written for the papers the deck needs), set `bibliography: refs.bib`, and write `[@key]`; md2s adds the References slides. Footnotes carry caveats and the other links, with the URL written out (GitHub issues, source lines, run logs). A paper's reading page quotes it in your own words in two to five lines, shows one to three of its figures, and cites it.
@@ -38,7 +39,7 @@ Use what md2s offers. When a slide needs a layout or a mark it does not have, sa
 
 - Equations are LaTeX (`$…$`, `$$…$$`). The research notation (`\LLM`, `\BCE`, `\Dice`, `\Lloss{LM}`, `\tok{OBJ}`) lives in `macros.tex` here, linked to `~/.config/md2s/macros.tex`; add a `\newcommand` there when a deck keeps repeating a symbol. Number an equation the deck refers back to with `\begin{equation}`.
 - Pseudocode is an ```` ```algo ```` fence holding an `algorithm2e` body. Small flowcharts can be ```` ```mermaid ```` or ```` ```dot ````.
-- Architecture diagrams are drawn in draw.io from `assets/diagram-kit.drawio` and exported with `md2s drawio figure.drawio -o figures/figure` (PNG at scale 2, placed at 1:1); never shapes on the slide, never a screenshot of the editor. The kit's vocabulary and colours: `references/diagrams.md`. If the user already has `.drawio` sources, export those rather than redrawing. `md2s tex2img --display '…' -o eq` makes a standalone formula picture when one is wanted outside a deck.
+- Architecture diagrams are drawn in draw.io from `assets/diagram-kit.drawio` and exported with `<skill-dir>/scripts/drawio-export.sh figure.drawio -o figures/figure` (an SVG, which md2s places at its own size; `--png` adds a PNG at scale 2); md2s itself reads no `.drawio`, so the slide uses the exported file; never shapes on the slide, never a screenshot of the editor. The kit's vocabulary and colours: `references/diagrams.md`. If the user already has `.drawio` sources, export those rather than redrawing. `md2s tex2img --display '…' -o eq` makes a standalone formula picture when one is wanted outside a deck.
 
 ## Check and hand back
 
@@ -51,5 +52,7 @@ Hand back the Markdown, the PDF and the PPTX, with figure sources beside their e
 - `references/style.md` — front matter, the weekly-deck skeleton, and the layouts these decks use most
 - `references/diagrams.md`, `assets/diagram-kit.drawio` / `.png` — the draw.io kit: vocabulary, colours, one styled instance of every element
 - `macros.tex` — the research notation for KaTeX and LaTeX fences (linked to `~/.config/md2s/macros.tex`)
+- `config.yaml` — the user's md2s defaults, such as `toc-standalone` (linked to `~/.config/md2s/config.yaml`); a deck's front matter overrides them
+- `scripts/drawio-export.sh` — draw.io → SVG (and PNG with `--png`) with the desktop app, headless
 
 The skill lives in the user's dotfiles (`agents/.agents/skills/slide-maker`) and is linked into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills`; md2s is a separate repo at `~/Code/md2s`.

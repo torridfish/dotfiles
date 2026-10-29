@@ -1,0 +1,3 @@
+# The user's md2s defaults (linked to ~/.config/md2s/config.yaml); a deck's front matter overrides any of them.
+# ## categories listed on the contents slide as entries of their own, after the sections
+toc-standalone: [TODO, Appendix, References]

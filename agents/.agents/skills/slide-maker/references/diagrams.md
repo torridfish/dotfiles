@@ -1,13 +1,13 @@
 # Diagrams
 
 Every architecture figure is drawn in draw.io, kept as a `.drawio` source next to its export, and placed on
-the slide as the exported PNG (scale 2, which the theme places at 1:1) or SVG. Never redraw an architecture
+the slide as the exported SVG (md2s places it at its own size; a PNG at scale 2 lands at the same size). Never redraw an architecture
 on the slide with shapes, and never paste a screenshot of the editor.
 
 ```bash
-md2s drawio figures/pipeline.drawio -o figures/pipeline        # PNG at scale 2
-md2s drawio figures/pipeline.drawio -o figures/pipeline --svg  # + SVG
-md2s drawio figures/all.drawio --page 2 -o figures/decoder     # one page of several
+<skill-dir>/scripts/drawio-export.sh figures/pipeline.drawio -o figures/pipeline        # SVG
+<skill-dir>/scripts/drawio-export.sh figures/pipeline.drawio -o figures/pipeline --png  # + PNG at scale 2
+<skill-dir>/scripts/drawio-export.sh figures/all.drawio --page 2 -o figures/decoder     # one page of several
 ```
 
 Start from `assets/diagram-kit.drawio` (preview: `assets/diagram-kit.png`): it holds one styled instance of
