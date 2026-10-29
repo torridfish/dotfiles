@@ -137,6 +137,7 @@ Every anchor is a CSS variable in `:root` at the top of `assets/marp/slide-maker
 | `--title-top`, `--title-height` | 22, 46 | the title box (text sits on its bottom) |
 | `--subtitle-top`, `--subtitle-height` | 68, 30 | the subtitle box (text centred in it) |
 | `--rule-top` | 98 | the line under the subtitle |
+| `--title-rule-gap` | 6 | a title with no subtitle (the contents slide) sits this far above the line |
 | `--body-top` | 106 | the lead, or the body when there is no lead |
 | `--lead-bottom` | 150 | where the body starts under a lead, at the earliest (not when a table, figure, formula or code comes right after it: then the usual gap) |
 | `--body-bottom` | 504 | the bottom of the body box; footnotes sit below it |

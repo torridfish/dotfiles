@@ -363,18 +363,20 @@ function tocs(md) {
       if (t.type === 'marpit_slide_open') slide++;
       if (i === at) tocSlide = slide;
       if (t.type !== 'heading_open' || !['h1', 'h2', 'h3'].includes(t.tag) || !tocSlide || slide <= tocSlide) return;
+      // render the heading's own parsed tokens: md.renderInline would parse again and reset Marp's directives
+      const html = state.md.renderer.renderInline(toks[i + 1].children || [], state.md.options, state.env).trim();
       const text = toks[i + 1].content.replace(/\s*\{[^}]*\}\s*$/, '');
       if (t.tag === 'h1') { groups.push(null); return; }    // a section page ends the run of a title
       const last = groups[groups.length - 1];
-      if (t.tag === 'h2') { if (!last || last.title !== text || last.slideEnd !== slide - 1) groups.push({ title: text, slide, slideEnd: slide, subs: [] }); else last.slideEnd = slide; return; }
+      if (t.tag === 'h2') { if (!last || last.title !== text || last.slideEnd !== slide - 1) groups.push({ title: text, html, slide, slideEnd: slide, subs: [] }); else last.slideEnd = slide; return; }
       if (!last) return;
       last.slideEnd = slide;
-      const sub = text.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, '');
-      if (!last.subs.some((x) => x.title === sub)) last.subs.push({ title: sub, slide });
+      const part = /\s*\(\d+\s*\/\s*\d+\)\s*$/;
+      const sub = text.replace(part, '');
+      if (!last.subs.some((x) => x.title === sub)) last.subs.push({ title: sub, html: html.replace(part, ''), slide });
     });
-    const inline = (x) => state.md.renderInline(x, state.env);
-    const li = (g) => `<li><a href="#${g.slide}">${inline(g.title)}</a>` +
-      (g.subs.length ? `<ul>${g.subs.map((x) => `<li><a href="#${x.slide}">${inline(x.title)}</a></li>`).join('')}</ul>` : '') + '</li>';
+    const li = (g) => `<li><a href="#${g.slide}">${g.html}</a>` +
+      (g.subs.length ? `<ul>${g.subs.map((x) => `<li><a href="#${x.slide}">${x.html}</a></li>`).join('')}</ul>` : '') + '</li>';
     toks[at].content = `<div class="toc"><ul>${groups.filter(Boolean).map(li).join('')}</ul></div>\n`;
   });
 }

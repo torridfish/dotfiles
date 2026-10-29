@@ -45,6 +45,7 @@
   --title-top: 22px; --title-height: 46px;
   --subtitle-top: 68px; --subtitle-height: 30px;
   --rule-top: 98px;                        /* the line under the subtitle */
+  --title-rule-gap: 6px;                   /* a title with no subtitle sits this far above the line */
   --body-top: 106px;                       /* lead, or the body when there is no lead */
   --lead-bottom: 150px;                    /* the body under a lead starts here at the earliest */
   --body-bottom: 504px;                    /* nothing in the body goes below this */
@@ -80,6 +81,8 @@ section h3 {
   margin: 0; padding-left: var(--header-inset); box-sizing: border-box;
   font: 400 var(--subtitle-size)/var(--leading) var(--serif); color: var(--amber); white-space: nowrap; overflow: hidden;
 }
+/* a slide with a title and no subtitle (the contents slide) sets its title just above the line */
+section:not(:has(> h3)) > h2 { bottom: calc(540px - var(--rule-top) + var(--title-rule-gap)); }
 section:has(> h2)::before {
   content: ''; position: absolute; left: var(--margin-x); top: var(--rule-top); width: calc(960px - 2 * var(--margin-x)); border-top: 1.33px solid var(--ink);
 }
@@ -223,8 +226,7 @@ section.columns .katex-display, section.columns .katex-display > .katex { text-a
 /* ---------- contents slide (front matter toc: true): each title with its subtitles, in two columns ---------- */
 section > .toc { columns: 2; column-gap: var(--space-3); padding: 0 var(--inset-body); }
 .toc ul { margin: 0; padding-left: 0; }
-.toc > ul > li { break-inside: avoid; }
-.toc > ul > li + li { padding-top: 4px; }
+.toc > ul > li { break-inside: avoid; padding-bottom: 4px; }   /* below, not above: a column's top stays level */
 .toc > ul > li::before { content: none; }
 .toc > ul > li > a { font-weight: bold; }
 .toc ul ul { padding-left: var(--mark-w); }
