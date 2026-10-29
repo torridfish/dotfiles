@@ -22,7 +22,24 @@ marp: true
 theme: slide-maker
 paginate: true        # slide number at the bottom right of every slide
 headingDivider: 2     # every # and ## starts a slide, so no --- is needed
+toc: true             # a contents slide after the first one ("Outline"; `toc: Contents` names it)
 ---
+```
+
+The contents slide lists every later slide's `##` in bold with its `###` under it, in two columns; a run of
+slides under the same `##` is one entry, a part number like `(1/2)` at the end of a `###` is dropped (so
+the parts are one line), and every line links to its slide in the PDF.
+
+A run of slides under the same title writes the `##` once: a `###` after another `###` starts the next
+slide with the same `##`.
+
+```markdown
+## Experiment
+### M3 runs minus same-K no-CoT          <- slide 1: Experiment / M3 runs …
+
+| … |
+
+### Exploratory: M3 final vs no-CoT       <- slide 2: Experiment / Exploratory …
 ```
 
 With `headingDivider: 2` a `---` still forces a break; any Markdown rule (`---`, `***`) is a slide break
@@ -127,6 +144,7 @@ Every anchor is a CSS variable in `:root` at the top of `assets/marp/slide-maker
 | `--column-width`, `--column-gap` | 437, 22 | the two columns |
 | `--run-label-height` | 22 | space a run label takes above its figure |
 | `--footnote-width` | 916 | widest a footnote line runs, from the left edge |
+| `--block-top` | 8 | extra room above a table, figure, code or formula that comes right under the line |
 | `--number-right`, `--number-top`, `--number-height` | 16, 508, 28 | the slide number, right-aligned |
 | `--cover-title-*`, `--cover-sub-*` | | title-page title and subtitle (centred) |
 | `--section-title-*`, `--divider-*` | | section-page title; plain divider line |

@@ -37,7 +37,7 @@
   --arrow-w: 1.25em;       /* the → opening a consequence line; its wrapped lines start after it */
   --bound: 4px;            /* 3pt around a table, figure or formula placed left in a column */
 
-  --space-2: 9.6px; --inset-body: 7.2px; --space-3: 24px; --block-gap: 14px;
+  --space-2: 9.6px; --inset-body: 7.2px; --space-3: 24px; --block-gap: 14px; --block-top: 8px;
 
   /* layout anchors, px on the 960 x 540 canvas */
   --margin-x: 32px;                        /* left / right margin of the header, rule and body */
@@ -90,7 +90,9 @@ section > blockquote {
   font-size: var(--body-size); quotes: none;
 }
 /* a table, figure, formula or code right under the lead takes the same gap above as below it */
-section > blockquote:has(+ :is(table, .code, p.figures, p:has(> .katex-display), img)) { min-height: 0; padding-bottom: 0; }
+section:not(.columns) > blockquote:has(+ :is(table, .code, p.figures, p:has(> .katex-display), img)) { min-height: 0; padding-bottom: 0; }
+/* the same block as the first thing under the line gets a little more room than text, which has its leading */
+section > :is(h2, h3) + :is(table, .code, p.figures, p:has(> .katex-display)) { margin-top: var(--block-top); }
 section > blockquote > p { margin: 0; }
 section > blockquote::before, section > blockquote::after { content: none; }
 
@@ -208,15 +210,34 @@ section.columns > * + * { margin-top: 0 !important; }
 section.columns:has(> :is(table, p.figures, p:has(> .katex-display))) { grid-template-columns: max-content 1fr; column-gap: 12px; }
 section.columns > table { justify-self: start; margin: 0 var(--bound) 0 var(--inset-body); }
 section.columns > p.figures { justify-content: flex-start; padding: 0 var(--bound) 0 var(--inset-body); }
+/* a figure in a column is as tall as the body allows (at most 1:1) and its column only as wide as that:
+   the width is worked out from the body's height and the picture's ratio (--fig-w, --fig-r by the engine),
+   since a grid column would otherwise keep the 1:1 width */
+section.columns { --fig-avail: calc(var(--body-bottom) - var(--body-top)); }
+section.columns:has(> blockquote) { --fig-avail: calc(var(--body-bottom) - var(--lead-bottom)); }
+section.columns > p.figures > img { width: min(var(--fig-w), calc(var(--fig-avail) * var(--fig-r))) !important; }
+section.columns > p.figures .figure img { width: min(var(--fig-w), calc((var(--fig-avail) - var(--run-label-height)) * var(--fig-r))) !important; }
 section.columns > p:has(> .katex-display) { padding: 0 var(--bound) 0 var(--inset-body); }
 section.columns .katex-display, section.columns .katex-display > .katex { text-align: left; }
+
+/* ---------- contents slide (front matter toc: true): each title with its subtitles, in two columns ---------- */
+section > .toc { columns: 2; column-gap: var(--space-3); padding: 0 var(--inset-body); }
+.toc ul { margin: 0; padding-left: 0; }
+.toc > ul > li { break-inside: avoid; }
+.toc > ul > li + li { padding-top: 4px; }
+.toc > ul > li::before { content: none; }
+.toc > ul > li > a { font-weight: bold; }
+.toc ul ul { padding-left: var(--mark-w); }
+.toc a { color: var(--ink); text-decoration: none; }
 
 /* ---------- footnotes [1], [2] … with superscript citations, and the slide number ---------- */
 sup.fn-ref { font-size: 0.7em; line-height: 0; vertical-align: super; }
 sup.fn-ref a { color: var(--link); text-decoration: none; }
 section > .footnotes {
   position: absolute; left: 0; bottom: 0; min-height: calc(540px - var(--body-bottom)); max-width: var(--footnote-width); box-sizing: border-box;
-  margin: 0; padding: 4px var(--space-2); display: flex; flex-direction: column; justify-content: center;
+  /* a one-line footnote sits on the slide number's centre line; more lines grow upwards */
+  margin: 0; padding: 4px var(--space-2) calc(540px - var(--number-top) - var(--number-height) / 2 - var(--note-size) * var(--leading) / 2);
+  display: flex; flex-direction: column; justify-content: flex-end;
   font-size: var(--note-size); line-height: var(--leading);
 }
 section[data-marpit-pagination]::after {

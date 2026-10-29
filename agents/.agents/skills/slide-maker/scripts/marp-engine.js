@@ -12,6 +12,8 @@
 //     every other fence monokai on a dark box with line numbers ({path="pkg/mod.py"} labels it,
 //     {start=42} sets the first line number)
 //   - inline marks: ==WIP==, [text]{.callout|.alert|.formula|.faint|.token}, # Name {.divider}
+//   - a ### may leave out a ## that repeats the previous slide's; front matter `toc: true` adds a contents
+//     slide after the first one, listing every ## with its ### (part numbers like (1/2) dropped)
 'use strict';
 const fs = require('fs');
 const os = require('os');
@@ -110,10 +112,10 @@ function imageSize(file) {
   return null;
 }
 /** 1:1 width in CSS px for a local figure (exports are 2x: 192 px per inch on a 96 px/in canvas). */
-function naturalWidth(src) {
+function naturalSize(src) {
   if (!src || /^[a-z]+:/i.test(src)) return null;
   const size = imageSize(path.resolve(process.env.RS_DECK_DIR || process.cwd(), decodeURI(src)));
-  return size ? size.w / 2 : null;
+  return size ? { w: size.w / 2, h: size.h / 2 } : null;
 }
 
 function figures(md) {
@@ -133,8 +135,9 @@ function figures(md) {
   md.renderer.rules.image = (tokens, idx, options, env, self) => {
     const t = tokens[idx];
     if (!/\b(w|h|width|height):/.test(t.content || '')) {      // Marp size keywords win
-      const w = naturalWidth(t.attrGet('src'));
-      if (w) t.attrJoin('style', `width:${w.toFixed(0)}px`);
+      // --fig-w / --fig-r let a column size the picture from the body's height (the theme's columns rules)
+      const n = naturalSize(t.attrGet('src'));
+      if (n) t.attrJoin('style', `width:${n.w.toFixed(0)}px;--fig-w:${n.w.toFixed(0)}px;--fig-r:${(n.w / n.h).toFixed(4)}`);
     }
     const label = t.attrGet('title');
     if (!label) return image(tokens, idx, options, env, self);
@@ -285,6 +288,97 @@ function marks(md) {
   });
 }
 
+// ---------- source rewrites: repeated titles, table of contents, thanks page ----------
+const DIVIDED = /^\s*headingDivider:\s*[1-6]|<!--\s*headingDivider:\s*[1-6]/m;
+
+/** Walk the Markdown lines outside the front matter, fences and HTML comments, calling fn(line, i). */
+function eachLine(lines, fn) {
+  let i = 0, fence = null, comment = false;
+  if (lines[0] === '---') { i = lines.indexOf('---', 1) + 1; if (i === 0) i = lines.length; }
+  for (; i < lines.length; i++) {
+    const l = lines[i];
+    if (fence) { if (l.trim().startsWith(fence)) fence = null; continue; }
+    if (comment) { if (l.includes('-->')) comment = false; continue; }
+    const f = l.match(/^\s*(```+|~~~+)/);
+    if (f) { fence = f[1]; continue; }
+    if (/^\s*<!--/.test(l) && !l.includes('-->')) { comment = true; continue; }
+    fn(l, i);
+  }
+}
+
+/** A ### that opens a new slide may leave out its ## when the title stays the same: the previous ## is
+    repeated before it. With headingDivider that is a ### following another ### under one ##; without it,
+    a ### on a slide (after ---) that has no ## of its own. */
+function repeatTitles(src) {
+  const lines = src.split('\n');
+  const divided = DIVIDED.test(src);
+  const insert = [];
+  let h2 = null, hasH2 = false, seenH3 = false;
+  eachLine(lines, (l, i) => {
+    if (/^\s*(---|\*\*\*|___)\s*$/.test(l)) { hasH2 = false; seenH3 = false; return; }
+    const h = l.match(/^(#{1,3})\s+(.*)$/);
+    if (!h) return;
+    if (h[1] === '#') { h2 = null; hasH2 = false; seenH3 = false; }
+    else if (h[1] === '##') { h2 = h[2]; hasH2 = true; seenH3 = false; }
+    else {
+      if (h2 && (divided ? seenH3 : !hasH2)) { insert.push([i, `## ${h2}`]); hasH2 = true; }
+      seenH3 = true;
+    }
+  });
+  for (const [i, line] of insert.reverse()) lines.splice(i, 0, line, '');
+  return lines.join('\n');
+}
+
+/** front matter `toc: true` (or `toc: Title`): a contents slide after the first slide, filled in by tocs() */
+function insertToc(src) {
+  const fm = src.match(/^---\n([\s\S]*?)\n---/);
+  const m = fm && fm[1].match(/^toc:\s*(.+?)\s*$/m);
+  if (!m || /^(false|no|off)$/i.test(m[1])) return src;
+  const title = /^(true|yes|on)$/i.test(m[1]) ? 'Outline' : m[1];
+  const lines = src.split('\n');
+  const divided = DIVIDED.test(src);
+  let started = false, at = -1;
+  eachLine(lines, (l, i) => {
+    if (at >= 0) return;
+    const brk = /^\s*(---|\*\*\*|___)\s*$/.test(l) || (divided && /^#{1,2}\s/.test(l));
+    if (started && brk) at = i;
+    else if (/^#{1,6}\s/.test(l) || (l.trim() && !/^\s*<!--.*-->\s*$/.test(l))) started = true;
+  });
+  const slide = `## ${title}\n\n<div class="toc"></div>\n`;
+  if (at < 0) return `${src.replace(/\s*$/, '')}\n\n${divided ? '' : '---\n\n'}${slide}`;
+  lines.splice(at, 0, ...(divided ? [slide] : ['---', '', slide]));
+  return lines.join('\n');
+}
+
+/** Fill the contents slide: every later slide's ## with its ### under it, a run of slides with the same ##
+    as one entry, (1/2)-style part numbers dropped, each entry linking to its first slide. */
+function tocs(md) {
+  md.core.ruler.after('marpit_slide', 'rs_toc', (state) => {
+    const toks = state.tokens;
+    const at = toks.findIndex((t) => t.type === 'html_block' && /<div class="toc"><\/div>/.test(t.content));
+    if (at < 0) return;
+    const groups = [];
+    let slide = 0, tocSlide = 0;
+    toks.forEach((t, i) => {
+      if (t.type === 'marpit_slide_open') slide++;
+      if (i === at) tocSlide = slide;
+      if (t.type !== 'heading_open' || !['h1', 'h2', 'h3'].includes(t.tag) || !tocSlide || slide <= tocSlide) return;
+      const text = toks[i + 1].content.replace(/\s*\{[^}]*\}\s*$/, '');
+      if (t.tag === 'h1') { groups.push(null); return; }    // a section page ends the run of a title
+      const last = groups[groups.length - 1];
+      if (t.tag === 'h2') { if (!last || last.title !== text || last.slideEnd !== slide - 1) groups.push({ title: text, slide, slideEnd: slide, subs: [] }); else last.slideEnd = slide; return; }
+      if (!last) return;
+      last.slideEnd = slide;
+      const sub = text.replace(/\s*\(\d+\s*\/\s*\d+\)\s*$/, '');
+      if (!last.subs.some((x) => x.title === sub)) last.subs.push({ title: sub, slide });
+    });
+    const inline = (x) => state.md.renderInline(x, state.env);
+    const li = (g) => `<li><a href="#${g.slide}">${inline(g.title)}</a>` +
+      (g.subs.length ? `<ul>${g.subs.map((x) => `<li><a href="#${x.slide}">${inline(x.title)}</a></li>`).join('')}</ul>` : '') + '</li>';
+    toks[at].content = `<div class="toc"><ul>${groups.filter(Boolean).map(li).join('')}</ul></div>\n`;
+  });
+}
+
 // ---------- footnotes: per slide ----------
 // Cited definitions go to the slides that cite them, numbered in citing order. A definition nobody cites
 // (a caveat or a link for the whole slide) goes to the slide its source line sits in.
@@ -386,14 +480,10 @@ function slideTypes(md) {
 module.exports = ({ marp }) => {
   marp.themeSet.add(theme());
   // slides.sh --thanks: close the deck with a thanks page (the title-page layout); off by default
-  if (process.env.RS_THANKS) {
-    const parse = marp.markdown.parse.bind(marp.markdown);
-    // with headingDivider the # line starts its own slide; a --- as well would leave an empty slide between
-    marp.markdown.parse = (src, env) => {
-      const divided = /^\s*headingDivider:\s*[1-6]|<!--\s*headingDivider:\s*[1-6]/m.test(src);
-      return parse(`${src.replace(/\s*$/, '')}\n\n${divided ? '' : '---\n\n'}# ${process.env.RS_THANKS}\n`, env);
-    };
-  }
+  // with headingDivider the # line starts its own slide; a --- as well would leave an empty slide between
+  const thanks = (src) => (process.env.RS_THANKS ? `${src.replace(/\s*$/, '')}\n\n${DIVIDED.test(src) ? '' : '---\n\n'}# ${process.env.RS_THANKS}\n` : src);
+  const parse = marp.markdown.parse.bind(marp.markdown);
+  marp.markdown.parse = (src, env) => parse(thanks(insertToc(repeatTitles(src))), env);
   return marp
     .use(require('markdown-it-footnote'))
     .use(require('markdown-it-mark'))
@@ -404,6 +494,7 @@ module.exports = ({ marp }) => {
     .use(tables)
     .use(fences)
     .use(marks)
+    .use(tocs)
     .use(footnotes)
     .use(slideTypes);
 };

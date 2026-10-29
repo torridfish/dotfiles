@@ -3,6 +3,7 @@ marp: true
 theme: slide-maker
 paginate: true
 headingDivider: 2
+toc: true
 ---
 
 <!-- slide-maker gallery: one slide per slide type and component. Render it after every theme change
@@ -42,8 +43,7 @@ Plain paragraph with `a/config/key`, a [link](https://example.com), ==WIP==, [4-
 
 ![](../diagram-kit.png "4-01")
 
-## Experiment
-### Two figures in a row
+### Two figures in a row (the ## is repeated from the slide before)
 
 ![](../diagram-kit.png "4-02") ![](../diagram-kit.png "4-03")
 
