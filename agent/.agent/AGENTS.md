@@ -25,22 +25,22 @@
     code, code comments, documentation, commit messages, PR titles and descriptions, and any files or reports you create.
 
 ## User confirmation
-- Confirm a checklist before acting (applies this rule in auto mode too).
-- **OK to do right away:** read-only investigation (reading files, grep, logs, checking config) and answering questions.
-- **Needs a checklist and my confirmation first:** anything with side effects, such as:
-    - editing or creating files
-    - installing packages
-    - deleting or moving files
-    - git commit/push
-    - publishing to external services (e.g. `gh gist create`, Google Sheet writes)
+These rules apply in auto mode too.
+- **OK to do right away:**
+    - Read-only investigation (reading files, grep, logs, checking config) and answering questions.
+    - Edits and commits the user explicitly asked for, when the scope is clear (e.g. "change X to Y", "commit this").
+- **Needs a checklist and my confirmation first:**
+    - Hard-to-reverse or outward-facing actions: deleting or moving files, git push, installing packages,
+      publishing to external services (e.g. `gh gist create`, Google Sheet writes).
+    - Ambiguous requests, or work that goes beyond what was asked (extra files, refactors, cleanup, new features).
 - The checklist should include:
-    1. Your understanding of the request/user instruction (one or two sentences)
-    2. Your assumptions, plus anything uncertain that need user to decide
+    1. Your understanding of the request (one or two sentences)
+    2. Your assumptions, plus anything uncertain that the user needs to decide
     3. Files to change, and what changes in each
-    4. What you **won't** do (unrequested refactors, cleanup, extra features, etc.)
-- Rules about what is considered confirmed:
-    - Wait for an explicit "OK," "go," or "run it."
-    - If the only reply with questions or edits, update the checklist and ask again.
-    - Approval covers only what's on the checklist. If you need something outside it, or results differ from what you expected, ALWAYS stop and report.
-    Don't change direction or fix things on the side.
-
+    4. What you **won't** do
+- What counts as confirmation:
+    - Any clear approval in any language (e.g. "OK", "go", "好", "可以"), or the user directly asking for the next step.
+    - If the user only replies with questions or edits, update the checklist and ask again.
+- Approval covers only what was asked or what is on the checklist.
+  If you need something outside it, or results differ from what you expected, ALWAYS stop and report.
+  Don't change direction or fix things on the side.
