@@ -5,9 +5,9 @@ the slide as the exported PNG (scale 2, which the theme places at 1:1) or SVG. N
 on the slide with shapes, and never paste a screenshot of the editor.
 
 ```bash
-<skill-dir>/scripts/drawio-export.sh figures/pipeline.drawio -o figures/pipeline        # PNG at scale 2
-<skill-dir>/scripts/drawio-export.sh figures/pipeline.drawio -o figures/pipeline --svg  # + SVG
-<skill-dir>/scripts/drawio-export.sh figures/all.drawio --page 2 -o figures/decoder     # one page of several
+md2s drawio figures/pipeline.drawio -o figures/pipeline        # PNG at scale 2
+md2s drawio figures/pipeline.drawio -o figures/pipeline --svg  # + SVG
+md2s drawio figures/all.drawio --page 2 -o figures/decoder     # one page of several
 ```
 
 Start from `assets/diagram-kit.drawio` (preview: `assets/diagram-kit.png`): it holds one styled instance of
