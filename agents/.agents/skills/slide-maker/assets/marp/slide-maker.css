@@ -1,8 +1,8 @@
 /* @theme slide-maker */
 /* slide-maker theme for Marp. The canvas is a 10 x 5.625 in slide at 96 px/in; every anchor and size is a
    variable in :root below, so moving the header, the body box or the footnote band is a change there.
-   All text is Times New Roman at three sizes (24pt title, 14pt subtitle and lead, 11pt body), 9pt tables,
-   8pt footnotes; code stays monospace and math is KaTeX. The engine (scripts/marp-engine.js) gives every
+   All text is Times New Roman at three sizes (24pt title, 14pt subtitle, 11pt lead and body), 9pt tables,
+   8pt footnotes, 30pt on the title page; code stays monospace and math is KaTeX. The engine (scripts/marp-engine.js) gives every
    slide its type as a class, read from the Markdown:
      title    # Title + a subtitle paragraph (the cover), or a last slide holding only a # line (the thanks page)
      section  # Title alone: a photo page opening a block of slides
@@ -11,22 +11,31 @@
    Classes for a whole content slide (<!-- _class: … -->): columns, prose, equation.
    The cover photo URL placeholder is filled in by the engine. */
 
+/* arrows come from FreeSerif: Liberation Serif's → is tiny and it has no ➔ or ⤷, which fall back to a sans */
+@font-face { font-family: 'Slide Arrows'; src: local('FreeSerif'); unicode-range: U+2190-21FF, U+2794, U+27A4, U+2933-2937; }
+
 :root {
   --ink: #000000; --ink-muted: #595959; --ink-faint: #9E9E9E; --ink-code: #2B3038; --surface-code: #F4F4F4;
   --amber: #9C6B1E; --link: #0000EE; --code-green: #188038; --code-blue: #1155CC; --code-orange: #B45F06;
   --alert: #FF0000; --alert-deep: #CC0000; --mark-orange: #F9CB9C; --mark-blue: #C9DAF8; --mark-yellow: #FFF2CC;
   --surface-head: #D9D9D9; --surface-head-blue: #D1E0F9; --band-blue: #CFE2F3; --band-orange: #FCE5CD;
-  --serif: 'Times New Roman', 'Liberation Serif', Times, 'Noto Serif CJK TC', serif;
+  --serif: 'Slide Arrows', 'Times New Roman', 'Liberation Serif', Times, 'Noto Serif CJK TC', serif;
   --mono: 'Courier New', 'Liberation Mono', Courier, monospace;
   --hack: Hack, 'Fira Code', 'DejaVu Sans Mono', monospace;
 
   /* type: pt x 4/3 = px */
   --title-size: 32px;      /* 24pt: slide title, title page, section page, divider */
-  --subtitle-size: 18.67px;/* 14pt: subtitle, lead, title-page subtitle, prose */
-  --body-size: 14.67px;    /* 11pt: body text, lists, run labels, slide number */
+  --subtitle-size: 18.67px;/* 14pt: subtitle, title-page subtitle, prose */
+  --body-size: 14.67px;    /* 11pt: lead, body text, lists, run labels, slide number */
   --table-size: 12px;      /* 9pt: every table */
   --note-size: 10.67px;    /* 8pt: footnotes, code path labels */
-  --leading: 1.2;          /* single line spacing */
+  --code-size: 12px;       /* 9pt: code blocks */
+  --cover-title-size: 40px; /* 30pt: the title-page title (cover and thanks) */
+  --leading: 1.3;          /* line spacing */
+  --indent: 2em;           /* one list level: two characters */
+  --mark-w: 1.5em;         /* a list marker's slot: markers line up with the text, the item's text after it */
+  --arrow-w: 1.25em;       /* the → opening a consequence line; its wrapped lines start after it */
+  --bound: 4px;            /* 3pt around a table, figure or formula placed left in a column */
 
   --space-2: 9.6px; --inset-body: 7.2px; --space-3: 24px; --block-gap: 14px;
 
@@ -41,7 +50,7 @@
   --body-bottom: 504px;                    /* nothing in the body goes below this */
   --column-width: 437px; --column-gap: 22px;
   --run-label-height: 22px;
-  --footnote-width: 860px;                 /* the band below body-bottom, from the left edge */
+  --footnote-width: 916px;                 /* the band below body-bottom, from the left edge, up to the slide number */
   --number-right: 16px; --number-top: 508px; --number-height: 28px;   /* right-aligned, from the right edge */
   --cover-title-top: 230px; --cover-title-height: 80px;      /* title page: centred */
   --cover-sub-top: 420px; --cover-sub-height: 72px;
@@ -78,19 +87,31 @@ section:has(> h2)::before {
 /* ---------- lead: the claim or question under the line ---------- */
 section > blockquote {
   margin: 0; padding: 0 var(--space-2) 8px; border: 0; box-sizing: border-box; min-height: calc(var(--lead-bottom) - var(--body-top));
-  font-size: var(--subtitle-size); quotes: none;
+  font-size: var(--body-size); quotes: none;
 }
+/* a table, figure, formula or code right under the lead takes the same gap above as below it */
+section > blockquote:has(+ :is(table, .code, p.figures, p:has(> .katex-display), img)) { min-height: 0; padding-bottom: 0; }
 section > blockquote > p { margin: 0; }
 section > blockquote::before, section > blockquote::after { content: none; }
 
 /* ---------- body text: notes, lists, prose ---------- */
 section p, section li { margin: 0; }
 section > p, section > ul, section > ol { padding: 0 var(--inset-body); }
-section ul { list-style: none; padding-left: var(--inset-body); }
-section ul ul { padding-left: 24px; }
-section ul > li::before { content: '- '; }             /* typed dashes, not bullets */
-section ol { padding-left: calc(var(--inset-body) + 1.4em); }
-section ol ol { list-style: lower-alpha; }
+/* markers start where paragraph text starts, the item's text after a --mark-w slot, so a wrapped line
+   lines up with the item's text; a nested list's marker sits two characters (--indent) right of its parent's */
+section ul, section ol { list-style: none; padding-left: calc(var(--inset-body) + var(--mark-w)); }
+section ol { counter-reset: item; }
+section li { position: relative; }
+section li::before { position: absolute; left: calc(-1 * var(--mark-w)); top: 0; font-weight: normal; color: var(--ink); }
+section ul > li::before { content: '•'; }
+section ol > li::before { content: counter(item) '.'; counter-increment: item; }
+section ol ol > li::before { content: counter(item, lower-alpha) '.'; }
+section li > :is(ul, ol) { padding-left: var(--indent); }
+/* ➔ / → opening a paragraph: wrapped lines start after the arrow; right after a list, at the list's text */
+section p.then { padding-left: var(--arrow-w); text-indent: calc(-1 * var(--arrow-w)); }
+section > p.then { padding-left: calc(var(--inset-body) + var(--arrow-w)); }
+section :is(ul, ol) + p.then { padding-left: calc(var(--inset-body) + var(--mark-w) + var(--arrow-w)); }
+.then-mark { display: inline-block; width: var(--arrow-w); text-indent: 0; }
 section.prose > p, section.prose > ul, section.prose > ol { font-size: var(--subtitle-size); }
 section strong { font-weight: bold; }
 section a { color: var(--link); text-decoration: underline; }
@@ -121,12 +142,12 @@ section > p.figures .figure { display: flex; flex-direction: column; align-items
 section > p.figures .figure img { height: auto; min-width: 0; min-height: 0; max-width: 100%; max-height: calc(100% - var(--run-label-height)); object-fit: contain; object-position: left top; }
 .run-label { font-size: var(--body-size); line-height: var(--run-label-height); }
 
-/* ---------- math (KaTeX): Computer Modern, left, 1.2x the body (1.5x on an equation slide) ---------- */
-/* KaTeX sets .katex at 1.21em: inline math comes down to the height of the text around it, display math
-   keeps the 1.21em */
-section .katex { font-size: 1.1em; }
-section .katex-display { margin: 0 0 0 var(--space-2) !important; text-align: left !important; font-size: 1em; }
-section .katex-display > .katex { font-size: 1.21em; text-align: left !important; }
+/* ---------- math (KaTeX): Computer Modern, centred, 1.2x the body (1.5x on an equation slide) ---------- */
+/* KaTeX sets .katex at 1.21em: inline math comes down to the size of the text around it, display math
+   keeps the 1.21em. A \tag or an equation number sits at the right edge of the body */
+section .katex { font-size: 1em; }
+section .katex-display { margin: 0 !important; text-align: center; font-size: 1em; }
+section .katex-display > .katex { font-size: 1.1em; text-align: center; }
 section.equation .katex-display { font-size: 1.25em; }
 section p:has(> .katex-display) { padding: 0; margin: 6px 0 var(--block-gap); }
 img.algo, img.tex { display: block; margin-left: var(--space-2); }
@@ -143,16 +164,19 @@ section table.settings td { text-align: left; }
 section table.settings td.c { text-align: center; }
 p.table-notes { font-size: var(--note-size); color: var(--ink-muted); text-align: center; }
 
-/* ---------- code: monokai on a dark rounded box, line numbers, optional path label ---------- */
-.code { align-self: stretch; container-type: inline-size; }   /* spans the body (or column) so it can measure it */
-.code-path { font: var(--note-size)/1.2 var(--mono); color: var(--ink-muted); padding: 0 0 3px 2px; }
+/* ---------- code: monokai on a dark rounded box, line numbers, optional path label inside it ---------- */
+/* .code spans the body (or column) so it can measure it; the box inside is as wide as its code, centred */
+.code { align-self: stretch; container-type: inline-size; display: flex; justify-content: center; }
+.code-box { min-width: 0; max-width: 100%; border-radius: 5px; background: #272822; overflow: hidden; }
+.code-path { font: var(--note-size)/1.2 var(--hack); color: #F8F8F2; padding: 10px 18px 0 14px; }
+.code-path + pre { padding-top: 6px !important; }
 .code pre {
   width: max-content; max-width: 100%; box-sizing: border-box;
-  margin: 0; padding: 14px 18px 14px 14px; border-radius: 5px; background: #272822;
+  margin: 0; padding: 14px 18px 14px 14px; background: none;
   font-family: var(--hack); line-height: 1.33; color: #F8F8F2; overflow: hidden; tab-size: 4;
-  /* 14px, or smaller when the longest line (--code-cols characters, set by the engine) would not fit:
+  /* 9pt, or smaller when the longest line (--code-cols characters, set by the engine) would not fit:
      a monospace character is about 0.602em wide */
-  font-size: min(14px, calc((100cqw - 32px) / (var(--code-cols, 60) * 0.602)));
+  font-size: min(var(--code-size), calc((100cqw - 32px) / (var(--code-cols, 60) * 0.602)));
 }
 /* the engine sets counter-reset (first line number - 1) and --ln-w (digits of the last number) */
 .code code { font: inherit; color: inherit; background: none; padding: 0; display: block; }
@@ -178,7 +202,14 @@ pre.prompt .path { color: var(--code-green); }
 /* ---------- two columns: the body blocks after the lead flow into two columns ---------- */
 section.columns { display: grid; grid-template-columns: var(--column-width) var(--column-width); column-gap: var(--column-gap); align-content: start; grid-auto-rows: min-content; }
 section.columns > blockquote { grid-column: 1 / -1; }   /* footnotes stay out of the grid: absolute, from the slide edge */
-section.columns > * + * { margin-top: 0; }
+section.columns > * + * { margin-top: 0 !important; }
+/* a table, figure row or formula in a column sits at the body's left edge with a 3pt bound, and its column
+   is only as wide as it is: the other column takes the rest */
+section.columns:has(> :is(table, p.figures, p:has(> .katex-display))) { grid-template-columns: max-content 1fr; column-gap: 12px; }
+section.columns > table { justify-self: start; margin: 0 var(--bound) 0 var(--inset-body); }
+section.columns > p.figures { justify-content: flex-start; padding: 0 var(--bound) 0 var(--inset-body); }
+section.columns > p:has(> .katex-display) { padding: 0 var(--bound) 0 var(--inset-body); }
+section.columns .katex-display, section.columns .katex-display > .katex { text-align: left; }
 
 /* ---------- footnotes [1], [2] … with superscript citations, and the slide number ---------- */
 sup.fn-ref { font-size: 0.7em; line-height: 0; vertical-align: super; }
@@ -202,6 +233,7 @@ section.title, section.section {
 }
 section h1 { margin: 0; font: 700 var(--title-size)/var(--leading) var(--serif); }
 section.title h1 {
+  font-size: var(--cover-title-size);
   position: absolute; left: 0; top: calc(var(--cover-title-top) + var(--cover-title-height) / 2); transform: translateY(-50%); width: 960px;
   padding: 0 var(--margin-x); box-sizing: border-box; text-align: center;
 }

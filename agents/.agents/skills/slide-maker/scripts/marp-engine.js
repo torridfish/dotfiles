@@ -1,6 +1,7 @@
 // Marp engine for slide-maker decks (used by scripts/marp.config.js). On top of Marp it adds:
 //   - the slide-maker theme, with the cover photo resolved to this skill's copy
-//   - the math preamble's macros (\LLM, \Lloss{LM}, \tok{OBJ}, \argmax …) expanded inside $…$ / $$…$$
+//   - the math preamble's macros (\LLM, \Lloss{LM}, \tok{OBJ}, \argmax …) expanded inside $…$ / $$…$$;
+//     ```math fences as display math; equation / align / gather numbered (1), (2) … across the deck
 //   - footnotes numbered [1], [2] per slide and set at the foot of the slide that cites them; a citation is a
 //     superscript [1] linking to its footnote
 //   - a slide type as a class on every slide: title, section, divider (see the theme's header)
@@ -57,11 +58,36 @@ function expand(tex, macros, depth = 0) {
   }
   return changed ? expand(out, macros, depth + 1) : out;
 }
+/** Split a math body at its top-level \\ (not those inside a nested \begin … \end). */
+function splitRows(body) {
+  const rows = [];
+  let depth = 0, last = 0;
+  for (const m of body.matchAll(/\\begin\{|\\end\{|\\\\/g)) {
+    if (m[0] === '\\begin{') depth++;
+    else if (m[0] === '\\end{') depth--;
+    else if (depth === 0) { rows.push(body.slice(last, m.index)); last = m.index + 2; }
+  }
+  rows.push(body.slice(last));
+  return rows;
+}
+/** Number a display formula the LaTeX way, deck-wide: equation gets one number, align / gather one per
+    row; the starred forms, \tag{…}, \notag and \nonumber opt out. KaTeX would restart at (1) per formula. */
+function numberEquations(tex, next) {
+  return tex.replace(/\\begin\{(equation|align|gather)\}([\s\S]*?)\\end\{\1\}/g, (_, env, body) => {
+    const tag = (row) => (/\\(tag|notag|nonumber)\b/.test(row) || !row.trim() ? row.replace(/\\(notag|nonumber)\b/g, '') : `${row} \\tag{${next()}}`);
+    if (env === 'equation') return tag(body);
+    return `\\begin{${env}*}${splitRows(body).map(tag).join('\\\\')}\\end{${env}*}`;
+  });
+}
 function mathMacros(md) {
   const macros = readMacros(path.join(TEX, 'preamble-math.tex'));
   md.core.ruler.after('inline', 'rs_math_macros', (state) => {
+    let n = 0;
+    const next = () => ++n;
     for (const t of state.tokens) {
-      if (t.type === 'marp_math_block') t.content = expand(t.content, macros);
+      // a ```math fence is display math, the same as $$ … $$
+      if (t.type === 'fence' && t.info.trim().split(/\s+/)[0] === 'math') Object.assign(t, { type: 'marp_math_block', tag: 'math', markup: '$$', info: '' });
+      if (t.type === 'marp_math_block') t.content = numberEquations(expand(t.content, macros), next);
       if (t.type === 'inline') for (const c of t.children || []) if (c.type === 'marp_math_inline') c.content = expand(c.content, macros);
     }
   });
@@ -228,8 +254,35 @@ function fences(md) {
     const html = fence(tokens, idx, options, env, self)
       .replace(/<pre\b/, `<pre style="--code-cols: ${(longest + digits + 1.6).toFixed(1)}"`)
       .replace(/(<code[^>]*)>([\s\S]*?)(<\/code>)/, (_, a, body, c) => `${a} style="${counter}">${numberLines(body.replace(/\n$/, ''))}${c}`);
-    return '<div class="code">' + (label ? `<div class="code-path">${md.utils.escapeHtml(label)}</div>` : '') + html + '</div>\n';
+    return '<div class="code"><div class="code-box">' + (label ? `<div class="code-path">${md.utils.escapeHtml(label)}</div>` : '') + html + '</div></div>\n';
   };
+}
+
+// ---------- lists and consequence arrows ----------
+// List markers are drawn by the theme from a counter, so an ordered list that resumes (3. after a paragraph)
+// starts its counter here. ➔ is drawn as a plain →; a paragraph opening with it hangs its wrapped lines
+// after the arrow, and right after a list it lines up with the list's text.
+function marks(md) {
+  md.core.ruler.after('inline', 'rs_marks', (state) => {
+    const toks = state.tokens;
+    toks.forEach((t, i) => {
+      if (t.type === 'ordered_list_open') {
+        const start = parseInt(t.attrGet('start'), 10);
+        if (start > 1) t.attrJoin('style', `counter-reset: item ${start - 1}`);
+      }
+      if (t.type !== 'inline') return;
+      const kids = t.children || [];
+      const open = toks[i - 1];
+      if (open && open.type === 'paragraph_open' && !open.hidden && kids[0] && kids[0].type === 'text' && /^➔\s*/.test(kids[0].content)) {
+        kids[0].content = kids[0].content.replace(/^➔\s*/, '');
+        const mark = new state.Token('html_inline', '', 0);
+        mark.content = '<span class="then-mark">→</span>';
+        kids.unshift(mark);
+        open.attrJoin('class', 'then');
+      }
+      for (const c of kids) if (c.type === 'text') c.content = c.content.replaceAll('➔', '→');
+    });
+  });
 }
 
 // ---------- footnotes: per slide ----------
@@ -350,6 +403,7 @@ module.exports = ({ marp }) => {
     .use(figures)
     .use(tables)
     .use(fences)
+    .use(marks)
     .use(footnotes)
     .use(slideTypes);
 };

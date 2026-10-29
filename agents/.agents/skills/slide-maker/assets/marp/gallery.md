@@ -26,7 +26,7 @@ Nov. 5, 2026
 
 Plain paragraph with `a/config/key`, a [link](https://example.com), ==WIP==, [4-03]{.callout}, [a blocker]{.alert}, [the formula]{.formula} and [a tentative aside]{.faint}.
 
-- Typed dash list with inline math $\rho_{\mathrm{norm}} = \lVert\mathbf e\rVert / \tau\sqrt{D}$ and macros $\Lloss{LM}$, $\tok{OBJ}$
+- Bullet list with inline math $\rho_{\mathrm{norm}} = \lVert\mathbf e\rVert / \tau\sqrt{D}$ and macros $\Lloss{LM}$, $\tok{OBJ}$
   - Second level
 - ➔ A consequence
 
@@ -65,6 +65,41 @@ $P \gets \mathrm{propose}(S)$\;
 \Return{$M$}
 \end{algorithm}
 ```
+
+## Analysis
+### Numbered equations and a math fence
+
+$$
+\begin{equation}
+p^*(r\mid\mathbf z)=\frac{\pi(r)\,\exp\!\big(-\lVert\mathbf z-\boldsymbol\mu(r)\rVert^2/2\tau^2\big)}{\sum_{r'}\pi(r')\,\exp\!\big(-\lVert\mathbf z-\boldsymbol\mu(r')\rVert^2/2\tau^2\big)}
+\end{equation}
+$$
+
+```math
+\begin{align}
+a &= b + c \\
+  &= d \notag \\
+  &= e
+\end{align}
+```
+
+$$
+x = y \tag{A.1}
+$$
+
+## Benchmark
+### Table and notes in two columns
+
+<!-- _class: columns -->
+
+| role | K | GSM8K | SVAMP |
+| --- | --- | --- | --- |
+| ref | 8 | 35.7 | 34.7 |
+| a | 16 | 35.9 | 34.9 |
+| b | 32 | **36.6** | **35.2** |
+
+- The table hugs the left edge; this column takes the rest of the width
+  - A nested point, two characters further in
 
 ## Analysis
 ### Equation slide (class equation)
