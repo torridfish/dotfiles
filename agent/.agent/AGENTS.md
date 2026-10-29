@@ -24,12 +24,6 @@
     - Chinese is for conversational replies only. Everything else is written in English unless the user says otherwise:
     code, code comments, documentation, commit messages, PR titles and descriptions, and any files or reports you create.
 
-## Papers
-- If user ask you to read paper, go fetch the latex source code to tmp folder first.
-    - For arxiv, this is under `https://arxiv.org/src/xxxx`.
-    - If no source code exist, then go fetch html file.
-    - PDF is your last choice, do not read pdf first (e.g. `https://arxiv.org/pdf/xxxx`).
-
 ## User confirmation
 - Confirm a checklist before acting (applies this rule in auto mode too).
 - **OK to do right away:** read-only investigation (reading files, grep, logs, checking config) and answering questions.
