@@ -38,7 +38,7 @@ Use what md2s offers. When a slide needs a layout or a mark it does not have, sa
 ## Notation and pictures
 
 - Equations are LaTeX (`$…$`, `$$…$$`). The research notation (`\LLM`, `\BCE`, `\Dice`, `\Lloss{LM}`, `\tok{OBJ}`) lives in `macros.tex` here, linked to `~/.config/md2s/macros.tex`; add a `\newcommand` there when a deck keeps repeating a symbol. Number an equation the deck refers back to with `\begin{equation}`.
-- Pseudocode is an ```` ```algo ```` fence holding an `algorithm2e` body. Small flowcharts can be ```` ```mermaid ```` or ```` ```dot ````.
+- Pseudocode is an ```` ```algo ```` fence holding an `algorithm2e` body. Small flowcharts can be ```` ```dot ```` (Graphviz).
 - Architecture diagrams are drawn in draw.io from `assets/diagram-kit.drawio` and exported with `<skill-dir>/scripts/drawio-export.sh figure.drawio -o figures/figure` (an SVG, which md2s places at its own size; `--png` adds a PNG at scale 2); md2s itself reads no `.drawio`, so the slide uses the exported file; never shapes on the slide, never a screenshot of the editor. The kit's vocabulary and colours: `references/diagrams.md`. If the user already has `.drawio` sources, export those rather than redrawing. `md2s tex2img --display '…' -o eq` makes a standalone formula picture when one is wanted outside a deck.
 
 ## Check and hand back
