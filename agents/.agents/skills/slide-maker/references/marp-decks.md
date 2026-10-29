@@ -7,7 +7,8 @@ A deck is one Markdown file rendered by Marp in the `slide-maker` theme
 <skill-dir>/scripts/slides.sh deck.md                  # deck.pdf (vector)
 <skill-dir>/scripts/slides.sh deck.md --pdf --pptx     # + deck.pptx, one 2880x1620 picture per slide
 <skill-dir>/scripts/slides.sh deck.md --pptx --scale 4  # pictures at 4x the canvas (3840x2160); default 3, PDF is vector
-<skill-dir>/scripts/slides.sh deck.md --html           # one self-contained HTML file to present from
+<skill-dir>/scripts/slides.sh deck.md --html           # one HTML file to present from (keys below)
+<skill-dir>/scripts/slides.sh deck.md --serve          # present at http://localhost:8080/deck.md (--port N), re-rendered on reload
 <skill-dir>/scripts/slides.sh deck.md --pdf --watch    # rebuild on every save
 <skill-dir>/scripts/slides.sh deck.md --pptx -o out/   # another output folder
 <skill-dir>/scripts/slides.sh deck.md --thanks         # append a "Thanks for listening." page (off by default)
@@ -40,7 +41,18 @@ slide with the same `##`.
 | … |
 
 ### Exploratory: M3 final vs no-CoT       <- slide 2: Experiment / Exploratory …
+
+- …
+
+---                                       <- slide 3: Experiment / Exploratory … (2/2)
+
+- the rest of that subsection
 ```
+
+A `---` that is not followed by a heading continues the subsection on a new slide with the same `##` and
+`###`, numbered (1/2), (2/2) … on every part (slide 2 above becomes Exploratory … (1/2)); the contents
+slide lists the subsection once. Do not write the part numbers by hand. With `headingDivider`, a `---` right before a `#` or
+`##` is dropped, since the heading starts the slide anyway.
 
 With `headingDivider: 2` a `---` still forces a break; any Markdown rule (`---`, `***`) is a slide break
 in Marp, so a body rule inside a slide is `<hr class="rule">`.
@@ -76,12 +88,90 @@ A thanks page is a build option, not part of the Markdown: `slides.sh --thanks` 
 `# Thanks for listening.`, and a last slide holding only a `#` line takes the title-page layout.
 (Writing that line by hand works the same way.)
 
-Whole-slide classes go in a comment on a content slide: `<!-- _class: columns -->` (body blocks after the
-lead fill two columns in order; wrap several blocks in a `<div>` to keep them in one column; a table,
-figure row or formula there sits at the body's left edge, its column only as wide as it is, and the other
-column takes the rest),
-`<!-- _class: prose -->` (body text at 14pt for a discussion page), `<!-- _class: equation -->` (display
-math at 1.5x on a slide that is only the equation). Classes combine: `<!-- _class: columns prose -->`.
+Whole-slide classes go in a comment on a content slide: `<!-- _class: prose -->` (body text at 14pt for a
+discussion page), `<!-- _class: equation -->` (display math at 1.5x on a slide that is only the equation).
+`<!-- _class: columns -->` still works: it picks a layout from the first block (a table: `fit-left`, a
+figure: `img-left`, otherwise `two`).
+
+## Layout
+
+The body of a content slide is one box: from the lead (or the line, without a lead) down to the top of the
+footnotes, so more footnote lines make it shorter. Without a layout it stacks its blocks top to bottom:
+text after text with no gap, a table, figure, formula or code block 14px from its neighbours.
+
+`<!-- _layout: … -->` makes the box a grid. A preset, or a CSS `grid-template` of named areas:
+
+| Layout | Areas |
+| --- | --- |
+| `two` | `a` and `b`, halves side by side |
+| `fit-left` / `fit-right` | `a b`; the left (right) one only as wide as its table or formula, the other takes the rest |
+| `img-left` / `img-right` | the same for a picture: as tall as the body allows (at most 1:1, at most 62% of the width) |
+| `rows` | `a` above `b`, halves |
+| `"a b" "a c" / auto 1fr` | anything `grid-template` takes: rows of area names in quotes, then `/` and the column sizes (`auto`, `max-content`, `1fr`, `300px`, `40%`); a row size goes after its quotes (`"a b" 1fr`) |
+| add `middle` | the content centred vertically (`<!-- _layout: middle -->` on a plain stack, `two middle` on a grid) |
+
+```markdown
+<!-- _layout: img-right -->
+
+::: a
+- The text column takes the rest of the width
+:::
+
+::: b
+![](figures/kv.png "4-01")
+:::
+```
+
+`::: name` … `:::` puts its blocks in that area, stacked like the plain body; `::: b middle`,
+`::: b bottom` and `::: b center` place them inside the area. Blocks outside any `:::` fill the cells in
+order, one block per cell — and two lists in a row are one list in Markdown, so give each column its own
+`:::` (or a `<div>`). Between areas the only space is the grid gap (14px down, 22px across, 12px beside
+a fit or picture column); a table, figure or formula in a layout sits at the body's left edge.
+
+## Callouts
+
+GitHub / Obsidian callouts are coloured boxes; any other `>` stays the lead.
+
+```markdown
+> [!NOTE]                    <- blue, titled "Note"
+> Body text, lists, math.
+
+> [!WARNING] Disk is full    <- amber, with its own title
+> [!TIP] Only a title        <- a one-line box
+```
+
+Colours: `NOTE` (also info, example, quote) blue, `TIP` (hint, success, done) green, `IMPORTANT` (abstract,
+summary, question) purple, `WARNING` (attention, todo) amber, `CAUTION` (danger, error, failure, bug) red.
+
+## Diagrams and media
+
+| Markdown | Renders as |
+| --- | --- |
+| ` ```mermaid ` | a mermaid diagram (mermaid-cli through the local Chrome), inline SVG: vector, labels selectable; neutral theme, Times |
+| ` ```dot ` / ` ```graphviz ` | a Graphviz diagram (the WASM build, no system install), inline SVG |
+| `{scale=0.8}` on either | resized from 1:1 |
+| `![](fig.pdf#page=2)` | that page of a PDF as a vector picture (pdftocairo), at 1:1 (pt x 4/3) |
+| `![](anim.gif)` | moves in `--html`; a PDF or PPTX shows its first frame |
+| `![](clip.mp4)` (webm, mov) | a player in `--html`; a PDF or PPTX shows its first frame (ffmpeg) with a play mark, linked to the file |
+
+Diagrams and frames are cached in `~/.cache/slide-maker/tex/`.
+
+## Presenting from HTML
+
+`slides.sh deck.md --html` writes one HTML file; open it in a browser. `slides.sh deck.md --serve` presents
+the same from Marp's server instead (the deck's folder at `http://localhost:8080/`, rendered again on every
+reload, so edits show up at once). Open from a file, Marp's overview cannot close again (its frame cannot
+talk to the page under `file://`); over `--serve` it can. The server listens on every network interface,
+so people on the same network can open the deck while it runs.
+
+| Key | Action |
+| --- | --- |
+| ← → / Space / PgUp PgDn, or a click on the left / right third | previous / next slide |
+| `l` | laser pointer on / off: the cursor becomes a red dot |
+| `d` | pen on / off: draw on the slide (each slide keeps its own drawing) |
+| `u` / `e` | undo the last stroke (or erase) / erase this slide |
+| `f` / `o` or `Esc` / `p` | fullscreen / overview / presenter view (Marp's own keys, which come first; the added keys use only letters Marp leaves free) |
+| `?` | these keys |
 
 ## Body
 
@@ -97,7 +187,7 @@ math at 1.5x on a slide that is only the equation). Classes combine: `<!-- _clas
 | `\LLM`, `\Lloss{LM}`, `\tok{OBJ}`, `\argmax` … | expanded from `assets/tex/preamble-math.tex`; add a `\newcommand` there to add one |
 | ` ```algo ` | an `algorithm2e` body rendered by `tex2img.sh` (800 dpi, transparent; `{scale=1.3}` resizes) |
 | ` ```latex {.render} ` | any LaTeX body rendered the same way |
-| ` ```python ` (any language) | monokai on a dark rounded box with line numbers; a box as wide as its code, centred, at 9pt (smaller only when the longest line would not fit) |
+| ` ```python ` (any language) | monokai on a dark rounded box with line numbers; a box as wide as its code, centred, at 9pt (smaller only when the longest line would not fit); the numbers are a separate column, so selecting or copying code (in the PDF too) leaves them out |
 | ` ```python {path="human_eval/execution.py" start=98} ` | the same, with the path in white at the top of the box (a label only: nothing is read from it) and numbering from 98 |
 | ` ```prompt ` | prompt template as text: `System:` bold, `{placeholder}` bold red, `<\|im_start\|>` on mark-blue |
 | a table | results table, centred and compact (1px cell padding): bold header on gray, 9pt, hairline grid |
@@ -142,7 +232,7 @@ Every anchor is a CSS variable in `:root` at the top of `assets/marp/slide-maker
 | `--lead-bottom` | 150 | where the body starts under a lead, at the earliest (not when a table, figure, formula or code comes right after it: then the usual gap) |
 | `--body-bottom` | 504 | the bottom of the body box; footnotes sit below it |
 | `--margin-x`, `--header-inset` | 32, 4 | side margin of header, line and body; title text inset |
-| `--column-width`, `--column-gap` | 437, 22 | the two columns |
+| `--column-gap` | 22 | between the columns of a layout |
 | `--run-label-height` | 22 | space a run label takes above its figure |
 | `--footnote-width` | 916 | widest a footnote line runs, from the left edge |
 | `--block-top` | 8 | extra room above a table, figure, code or formula that comes right under the line |

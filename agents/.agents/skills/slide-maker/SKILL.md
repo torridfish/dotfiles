@@ -12,18 +12,20 @@ A deck is one Markdown file. `scripts/slides.sh` renders it with Marp in the sli
 <skill-dir>/scripts/slides.sh 2026-11-05/deck.md --pdf --watch    # rebuild on every save
 <skill-dir>/scripts/slides.sh 2026-11-05/deck.md --pdf -o out/    # another output folder
 <skill-dir>/scripts/slides.sh 2026-11-05/deck.md --pdf --thanks   # close with a "Thanks for listening." page
+<skill-dir>/scripts/slides.sh 2026-11-05/deck.md --html           # present from a browser: laser l, pen d, ? for keys
+<skill-dir>/scripts/slides.sh 2026-11-05/deck.md --serve          # the same at http://localhost:8080/deck.md, re-rendered on reload
 ```
 
 ## Write the deck
 
-Read `references/marp-decks.md` before writing: the front matter, the slide types, and every layout, table and code feature with its syntax. Write the slide list straight into the Markdown; it is the reviewable plan and the source at once. Ask for whatever content is missing (run IDs, numbers, figure files) rather than inventing it; a placeholder on a research slide is worse than a shorter deck.
+Read `references/marp-decks.md` before writing: the front matter, the slide types, the layouts (`<!-- _layout: … -->` with `::: a` areas), callouts (`> [!NOTE]`), and every table, code, diagram and media feature with its syntax. Write the slide list straight into the Markdown; it is the reviewable plan and the source at once. Ask for whatever content is missing (run IDs, numbers, figure files) rather than inventing it; a placeholder on a research slide is worse than a shorter deck.
 
 Use what the catalogue offers. When a slide needs a layout or a mark it does not have, say so and add it to the theme and the catalogue (a class in `assets/marp/slide-maker.css`, a line in `references/marp-decks.md`, a page in `assets/marp/gallery.md`) instead of improvising a one-off `<style scoped>` that the next deck cannot reuse. `<style scoped>` is for nudging one slide, not for new components.
 
 ## Writing conventions
 
 - A weekly deck runs title page → (section page → content slides)* → TODO, twelve to twenty-five content slides, one message per slide. Add a closing thanks page at build time with `slides.sh --thanks` when the talk wants one; it is not written in the Markdown. A slide that cannot be named by a title and a subtitle is two slides.
-- Slides that share a title write the `##` once and start each slide with its `###`. Set `toc: true` in the front matter for a contents slide after the title page.
+- Slides that share a title write the `##` once and start each slide with its `###`; a subsection that runs over continues after a `---`, which repeats the `##` and `###`. Set `toc: true` in the front matter for a contents slide after the title page.
 - The title (`##`) is the category of the slide, a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period.
 - The lead (`>`) states the claim or the question in one or two sentences; bold the one term the slide turns on.
 - Name runs by their ID and use it as a noun: 2-92, 4-00, 4-03. A run ID above a figure is the image title (`![](f.png "4-03")`); one called out in text is `[4-03]{.callout}`.
@@ -35,6 +37,8 @@ Use what the catalogue offers. When a slide needs a layout or a mark it does not
 
 Equations are LaTeX in the Markdown (`$…$`, `$$…$$`), typeset by KaTeX; the macros in `assets/tex/preamble-math.tex` (`\LLM`, `\BCE`, `\Dice`, `\Lloss{LM}`, `\tok{OBJ}`, `\argmax`) work there too, so add a `\newcommand` there when a deck keeps repeating a symbol. Pseudocode is an ```` ```algo ```` fence holding an `algorithm2e` body, rendered by `scripts/tex2img.sh` (800 dpi, transparent). Code is a fenced block, drawn by the theme. None of these leave the machine.
 
+Small flowcharts and graphs can be ```` ```mermaid ```` or ```` ```dot ```` fences, rendered to inline SVG at build time. A PDF page (`![](fig.pdf#page=2)`) becomes a vector picture; GIFs and videos play in `--html` and show their first frame in the PDF.
+
 Architecture diagrams are drawn in draw.io from `assets/diagram-kit.drawio` and exported with `scripts/drawio-export.sh figure.drawio -o figures/figure` (PNG at scale 2, placed at 1:1 by the theme); never shapes on the slide, never a screenshot of the editor. The kit's vocabulary and colours: `references/diagrams.md`. If the user already has `.drawio` sources, export those rather than redrawing. `tex2img.sh` also makes a standalone picture of a formula when one is wanted outside a deck (`--display`, `--math`, `--body`).
 
 ## Check and hand back
@@ -45,11 +49,12 @@ Hand back the Markdown, the PDF and the PPTX, with figure sources beside their e
 
 ## Files in this skill
 
-- `scripts/slides.sh` — Markdown → PDF / PPTX / HTML / PNG with Marp; `scripts/marp.config.js` (KaTeX with local fonts, local files on); `scripts/marp-engine.js` (theme registration, math macros, per-slide footnotes, figure rows at 1:1, table roles, algo / prompt / code fences)
+- `scripts/slides.sh` — Markdown → PDF / PPTX / HTML / PNG with Marp; `scripts/marp.config.js` (KaTeX with local fonts, local files on); `scripts/marp-engine.js` (theme registration, math macros, per-slide footnotes, the body box and layouts, callouts, figure rows at 1:1, PDF / video media, table roles, algo / mermaid / dot / prompt / code fences, contents slide); `scripts/dot2svg.mjs` and `scripts/mermaid.json` (diagram rendering)
+- `assets/marp/present.js` — the presenting tools added to `--html` output (click to turn, laser, pen, undo, erase)
 - `assets/marp/slide-maker.css` — the theme: layout variables at the top, then every slide type and component
 - `assets/marp/gallery.md` — one slide per slide type and component; render it after changing the theme and compare
 - `references/marp-decks.md` — the authoring catalogue; `references/diagrams.md` — the draw.io kit's vocabulary and colours
-- `scripts/tex2img.sh` (LaTeX → transparent PNG / SVG), `scripts/drawio-export.sh` (draw.io → PNG / SVG); `assets/tex/*.tex` preambles; `assets/diagram-kit.drawio` / `.png`; `assets/cover-temple-night.jpg`
+- `scripts/tex2img.sh` (LaTeX → transparent PNG / SVG), `scripts/drawio-export.sh` (draw.io → PNG / SVG); `assets/tex/*.tex` preambles; `assets/diagram-kit.drawio` / `.png`; `assets/cover-temple-night.jpg`; `assets/demo.gif` (the gallery's GIF)
 - `scripts/setup.sh` — one-time setup: npm packages under `scripts/`, and a report of the tools below
 
-Dependencies: Node 18+; Chrome or Chromium (Marp renders through it; `CHROME_PATH` picks one); TeX Live with `standalone` and `algorithm2e`, plus `dvisvgm`; poppler's `pdftocairo`; Python 3 with Pillow; the draw.io desktop app for diagrams. The skill lives in the user's dotfiles (`agents/.agents/skills/slide-maker`) and is linked into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills`.
+Dependencies: Node 18+; Chrome or Chromium (Marp and mermaid-cli render through it; `CHROME_PATH` picks one); ffmpeg for video posters; TeX Live with `standalone` and `algorithm2e`, plus `dvisvgm`; poppler's `pdftocairo`; Python 3 with Pillow; the draw.io desktop app for diagrams. The skill lives in the user's dotfiles (`agents/.agents/skills/slide-maker`) and is linked into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills`.

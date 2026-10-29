@@ -47,6 +47,10 @@ Plain paragraph with `a/config/key`, a [link](https://example.com), ==WIP==, [4-
 
 ![](../diagram-kit.png "4-02") ![](../diagram-kit.png "4-03")
 
+### A picture and a GIF (the GIF moves in --html, a PDF shows its first frame)
+
+![](../diagram-kit.png "png") ![](../demo.gif "gif")
+
 ## Setup
 ### Display math and an algorithm
 
@@ -176,6 +180,74 @@ Assistant: {Task response}
 <hr class="rule">
 
 Logical consistency: currently no good idea about this part.
+
+## Layout
+### img-right: text in area a, the picture in b
+
+<!-- _layout: img-right -->
+
+::: a
+- The text column takes the rest of the width
+- The picture is as tall as the body allows, at most 1:1 and 62% of the width
+:::
+
+::: b
+![](../diagram-kit.png "4-04")
+:::
+
+### Custom areas, centred vertically
+
+<!-- _layout: "a b" "a c" / auto 1fr middle -->
+
+::: a
+| K | GSM8K |
+| --- | --- |
+| 8 | 35.7 |
+| 16 | 35.9 |
+:::
+
+::: b
+- Area b, top right
+:::
+
+::: c center
+**Area c, centred**
+:::
+
+## Review
+### Callouts
+
+> [!NOTE]
+> A note with **bold** and $x^2$.
+
+> [!TIP] A tip with its own title
+> - and a list
+
+> [!WARNING] Only a title
+
+> [!CAUTION]
+> Caution.
+
+## Setup
+### Diagrams: mermaid and dot
+
+```mermaid
+flowchart LR
+  Q[Query] --> E(Encoder) --> D[Decoder]
+```
+
+```dot
+digraph { rankdir=LR; node [shape=box]; scene -> tokens -> LLM -> mask }
+```
+
+## Analysis
+### A subsection that runs over
+
+- First part
+
+---
+
+- Second part, under the same title and subtitle, numbered (2/2)
 
 ## TODO
 ### Week of Nov. 10

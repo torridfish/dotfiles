@@ -4,7 +4,7 @@
 set -uo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HERE"
-echo "== node packages (marp-cli, markdown-it plugins) =="
+echo "== node packages (marp-cli, markdown-it plugins, mermaid-cli, Graphviz WASM) =="
 command -v node >/dev/null || { echo "node not found: install Node 18+ first" >&2; exit 1; }
 npm install --ignore-scripts --no-audit --no-fund >/dev/null && echo "ok: scripts/node_modules"
 echo "== external tools =="
@@ -12,6 +12,7 @@ miss=0
 chk() { if command -v "$1" >/dev/null 2>&1; then echo "ok: $1"; else echo "MISSING: $1 — $2"; miss=1; fi; }
 if [ -n "${CHROME_PATH:-}" ] || command -v google-chrome >/dev/null || command -v chromium >/dev/null || command -v chromium-browser >/dev/null || [ -d "/Applications/Google Chrome.app" ]; then echo "ok: Chrome / Chromium (slides.sh)"; else echo "MISSING: Chrome or Chromium — slides.sh renders through it (or set CHROME_PATH)"; miss=1; fi
 chk latex "TeX Live (tex2img.sh: algo fences)"; chk dvisvgm "TeX Live (tex2img.sh SVG output)"; chk pdftocairo "poppler-utils (tex2img.sh transparent PNG)"
+chk ffmpeg "a video's first frame in a PDF / PPTX"
 python3 -c 'import PIL' 2>/dev/null && echo "ok: Pillow" || { echo "MISSING: Pillow — tex2img.sh reports sizes with it"; miss=1; }
 kpsewhich algorithm2e.sty >/dev/null 2>&1 && echo "ok: algorithm2e" || { echo "MISSING: algorithm2e (tlmgr install algorithm2e)"; miss=1; }
 kpsewhich standalone.cls >/dev/null 2>&1 && echo "ok: standalone" || { echo "MISSING: standalone (tlmgr install standalone)"; miss=1; }

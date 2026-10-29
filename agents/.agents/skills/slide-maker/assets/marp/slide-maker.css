@@ -8,7 +8,11 @@
      section  # Title alone: a photo page opening a block of slides
      divider  # Name {.divider}: a plain white page with one centred line
      (none)   ## Title  ### subtitle  > lead  then the body: a content slide
-   Classes for a whole content slide (<!-- _class: … -->): columns, prose, equation.
+   A content slide's body (after the title, subtitle and lead, before the footnotes) is a <div class="body">
+   set by the engine: the box from the lead (or the line) down to the footnotes. It stacks its blocks, or with
+   <!-- _layout: … --> it is a grid (presets below, or a grid-template of named areas filled with ::: name).
+   Classes for a whole content slide (<!-- _class: … -->): prose, equation (columns: the old two-column class,
+   now a layout picked by the engine).
    The cover photo URL placeholder is filled in by the engine. */
 
 /* arrows come from FreeSerif: Liberation Serif's → is tiny and it has no ➔ or ⤷, which fall back to a sans */
@@ -49,7 +53,7 @@
   --body-top: 106px;                       /* lead, or the body when there is no lead */
   --lead-bottom: 150px;                    /* the body under a lead starts here at the earliest */
   --body-bottom: 504px;                    /* nothing in the body goes below this */
-  --column-width: 437px; --column-gap: 22px;
+  --column-gap: 22px;                      /* between the columns of a layout */
   --run-label-height: 22px;
   --footnote-width: 916px;                 /* the band below body-bottom, from the left edge, up to the slide number */
   --number-right: 16px; --number-top: 508px; --number-height: 28px;   /* right-aligned, from the right edge */
@@ -92,16 +96,67 @@ section > blockquote {
   margin: 0; padding: 0 var(--space-2) 8px; border: 0; box-sizing: border-box; min-height: calc(var(--lead-bottom) - var(--body-top));
   font-size: var(--body-size); quotes: none;
 }
-/* a table, figure, formula or code right under the lead takes the same gap above as below it */
-section:not(.columns) > blockquote:has(+ :is(table, .code, p.figures, p:has(> .katex-display), img)) { min-height: 0; padding-bottom: 0; }
-/* the same block as the first thing under the line gets a little more room than text, which has its leading */
-section > :is(h2, h3) + :is(table, .code, p.figures, p:has(> .katex-display)) { margin-top: var(--block-top); }
 section > blockquote > p { margin: 0; }
 section > blockquote::before, section > blockquote::after { content: none; }
 
+/* ---------- the body box ---------- */
+/* it takes the height left between the lead (or the line) and the footnotes; a size container, so a picture
+   in a layout can size itself from the body's height (cqh) */
+section > .body { flex: 1 1 0; min-height: 0; container-type: size; display: flex; flex-direction: column; justify-content: flex-start; }
+section > .body.middle { justify-content: center; }
+/* a stack (a body without a layout, or one area of it): blocks top to bottom */
+:is(.body, .area) > * { margin: 0; flex: none; }
+.area { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.area.middle { justify-content: center; }
+.area.bottom { justify-content: flex-end; }
+.area.center { align-items: center; }
+/* a table, figure, formula or code right under the lead takes the same gap above as below it */
+section > blockquote:has(+ .body:not(.layout) > :first-child:is(table, .code, p.figures, p:has(> .katex-display), img)) { min-height: 0; padding-bottom: 0; }
+section > blockquote + .body:not(.layout):has(> :first-child:is(table, .code, p.figures, p:has(> .katex-display), img)) { margin-top: var(--block-gap); }
+/* the same block as the first thing under the line gets a little more room than text, which has its leading */
+section > :is(h2, h3) + .body:has(> :first-child:is(table, .code, p.figures, p:has(> .katex-display))) { margin-top: var(--block-top); }
+
+/* ---------- layouts: <!-- _layout: … --> makes the body a grid of areas a, b … ---------- */
+/* each preset is a grid-template; a block outside ::: a … ::: fills the next free cell. Between areas the
+   only space is the grid gap */
+section > .body.layout {
+  display: grid; gap: var(--block-gap) var(--column-gap); align-items: start;
+  grid-template: "a b" minmax(0, 1fr) / minmax(0, 1fr) minmax(0, 1fr);       /* two: halves side by side */
+}
+section > .body.layout-fit-left, section > .body.layout-img-left { grid-template: "a b" minmax(0, 1fr) / max-content minmax(0, 1fr); column-gap: 12px; }
+section > .body.layout-fit-right, section > .body.layout-img-right { grid-template: "a b" minmax(0, 1fr) / minmax(0, 1fr) max-content; column-gap: 12px; }
+section > .body.layout-rows { grid-template: "a" minmax(0, 1fr) "b" minmax(0, 1fr) / minmax(0, 1fr); }
+section > .body.layout.middle { align-content: center; align-items: center; }
+section > .body.layout.middle > .area { justify-content: center; }
+section > .body.layout > .area { align-self: stretch; }
+section > .body.layout > .code { align-self: start; }   /* .code stretches across a stack, not down a cell */
+/* in a layout, a table, figure row or formula sits at the body's left edge with a 3pt bound */
+section > .body.layout > table, .body.layout > .area > table { align-self: start; justify-self: start; margin: 0 var(--bound) 0 var(--inset-body); }
+section > .body.layout > p.figures, .body.layout > .area > p.figures { justify-content: flex-start; padding: 0 var(--bound) 0 var(--inset-body); }
+.body.layout p:has(> .katex-display) { padding: 0 var(--bound) 0 var(--inset-body); }
+.body.layout .katex-display, .body.layout .katex-display > .katex { text-align: left; }
+/* a picture beside text is as tall as the body allows (at most 1:1) and its column only as wide as that:
+   the width comes from the body's height (cqh) and the picture's ratio (--fig-w, --fig-r by the engine),
+   and stops at --fig-max of the body's width so the text keeps room */
+.body.layout { --fig-max: 62cqw; --fig-h: 100cqh; }
+.body.layout-rows { --fig-max: 100cqw; --fig-h: calc(50cqh - var(--block-gap) / 2); }
+.body.layout > p.figures > img, .body.layout > .area > p.figures > img { width: min(var(--fig-w), calc(var(--fig-h) * var(--fig-r)), var(--fig-max)) !important; }
+.body.layout > p.figures .figure img, .body.layout > .area > p.figures .figure img { width: min(var(--fig-w), calc((var(--fig-h) - var(--run-label-height)) * var(--fig-r)), var(--fig-max)) !important; }
+
+/* ---------- callouts: > [!NOTE] Title, GitHub's five colours ---------- */
+.admonition { border-left: 3px solid var(--adm); background: var(--adm-bg); padding: 4px var(--space-2) 5px; border-radius: 3px; }
+.admonition > p, .admonition > ul, .admonition > ol { margin: 0; }
+.admonition-title { font-weight: bold; color: var(--adm); }
+.admonition-note { --adm: #0969DA; --adm-bg: #EEF4FC; }
+.admonition-tip { --adm: #1A7F37; --adm-bg: #EDF7F0; }
+.admonition-important { --adm: #8250DF; --adm-bg: #F4EFFC; }
+.admonition-warning { --adm: #9A6700; --adm-bg: #FBF4E4; }
+.admonition-caution { --adm: #CF222E; --adm-bg: #FCEDEE; }
+
 /* ---------- body text: notes, lists, prose ---------- */
 section p, section li { margin: 0; }
-section > p, section > ul, section > ol { padding: 0 var(--inset-body); }
+:is(.body, .area) > p { padding: 0 var(--inset-body); }
+:is(.body, .area) > :is(ul, ol) { padding-right: var(--inset-body); }
 /* markers start where paragraph text starts, the item's text after a --mark-w slot, so a wrapped line
    lines up with the item's text; a nested list's marker sits two characters (--indent) right of its parent's */
 section ul, section ol { list-style: none; padding-left: calc(var(--inset-body) + var(--mark-w)); }
@@ -114,10 +169,10 @@ section ol ol > li::before { content: counter(item, lower-alpha) '.'; }
 section li > :is(ul, ol) { padding-left: var(--indent); }
 /* ➔ / → opening a paragraph: wrapped lines start after the arrow; right after a list, at the list's text */
 section p.then { padding-left: var(--arrow-w); text-indent: calc(-1 * var(--arrow-w)); }
-section > p.then { padding-left: calc(var(--inset-body) + var(--arrow-w)); }
-section :is(ul, ol) + p.then { padding-left: calc(var(--inset-body) + var(--mark-w) + var(--arrow-w)); }
+:is(.body, .area) > p.then { padding-left: calc(var(--inset-body) + var(--arrow-w)); }
+section :is(ul, ol) + p.then, :is(.body, .area) > :is(ul, ol) + p.then { padding-left: calc(var(--inset-body) + var(--mark-w) + var(--arrow-w)); }
 .then-mark { display: inline-block; width: var(--arrow-w); text-indent: 0; }
-section.prose > p, section.prose > ul, section.prose > ol { font-size: var(--subtitle-size); }
+section.prose :is(.body, .area) > :is(p, ul, ol) { font-size: var(--subtitle-size); }
 section strong { font-weight: bold; }
 section a { color: var(--link); text-decoration: underline; }
 section code { font: 0.8em var(--mono); color: var(--ink-code); background: var(--surface-code); padding: 0 2px; }
@@ -129,8 +184,8 @@ section mark, .wip { background: var(--mark-yellow); color: var(--ink); }
 .token { background: var(--mark-blue); }
 
 /* stacked blocks after text get a gap; text after text does not (paragraph spacing 0) */
-section > :is(p, ul, ol, blockquote) + :is(table, pre, .code, .figures, .math, img, div) { margin-top: var(--block-gap); }
-section > :is(table, pre, .code, .figures, .math, div) + :is(p, ul, ol, table, pre, .code, .math, div) { margin-top: var(--block-gap); }
+:is(.body:not(.layout), .area) > :is(p, ul, ol) + :is(table, pre, .code, .figures, .math, img, div) { margin-top: var(--block-gap); }
+:is(.body:not(.layout), .area) > :is(table, pre, .code, .figures, .math, div) + :is(p, ul, ol, table, pre, .code, .math, div) { margin-top: var(--block-gap); }
 
 /* body rule: <hr class="rule"> (a Markdown --- is a slide break in Marp) */
 section hr.rule { border: 0; border-top: 1.33px solid var(--ink); margin: var(--block-gap) 0; }
@@ -138,14 +193,24 @@ section hr.rule { border: 0; border-top: 1.33px solid var(--ink); margin: var(--
 /* ---------- figures: a paragraph of images is one centred row ---------- */
 /* a picture sits at 1:1 (width set by the engine), centred; it shrinks only when the row is too wide or
    the body too short, never grows. The row shrinks with the body, so max-height: 100% has a height to use */
-section > p.figures {
+:is(.body, .area) > p.figures {
   flex: 0 1 auto; min-height: 0; padding: 0;
   display: flex; justify-content: center; align-items: flex-start; gap: var(--space-3);
 }
-section > p.figures > img { height: auto; min-width: 0; max-width: 100%; max-height: 100%; flex: 0 1 auto; object-fit: contain; object-position: center top; }
-section > p.figures .figure { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 0; max-height: 100%; flex: 0 1 auto; }
-section > p.figures .figure img { height: auto; min-width: 0; min-height: 0; max-width: 100%; max-height: calc(100% - var(--run-label-height)); object-fit: contain; object-position: left top; }
+:is(.body, .area) > p.figures > img { height: auto; min-width: 0; max-width: 100%; max-height: 100%; flex: 0 1 auto; object-fit: contain; object-position: center top; }
+:is(.body, .area) > p.figures .figure { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 0; max-height: 100%; flex: 0 1 auto; }
+:is(.body, .area) > p.figures .figure img { height: auto; min-width: 0; min-height: 0; max-width: 100%; max-height: calc(100% - var(--run-label-height)); object-fit: contain; object-position: left top; }
 .run-label { font-size: var(--body-size); line-height: var(--run-label-height); }
+/* a video in a PDF / PPTX: its first frame with a play mark, linked to the file */
+a.video { position: relative; display: inline-block; min-width: 0; max-width: 100%; max-height: 100%; }
+a.video > img { display: block; max-width: 100%; max-height: 100%; }
+a.video::after { content: '▶'; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: 44px; height: 44px; border-radius: 50%; background: rgba(0,0,0,.55); color: #fff; font: 20px/44px sans-serif; text-align: center; text-indent: 3px; }
+video { max-width: 100%; max-height: 100%; }
+
+/* ---------- diagrams: ```mermaid / ```dot as inline SVG at 1:1, centred, shrinking to fit ---------- */
+.diagram { display: flex; justify-content: center; min-height: 0; flex: 0 1 auto; }
+.diagram > svg { max-width: 100%; max-height: 100%; height: auto; }
 
 /* ---------- math (KaTeX): Computer Modern, centred, 1.2x the body (1.5x on an equation slide) ---------- */
 /* KaTeX sets .katex at 1.21em: inline math comes down to the size of the text around it, display math
@@ -176,17 +241,17 @@ p.table-notes { font-size: var(--note-size); color: var(--ink-muted); text-align
 .code-path { font: var(--note-size)/1.2 var(--hack); color: #F8F8F2; padding: 10px 18px 0 14px; }
 .code-path + pre { padding-top: 6px !important; }
 .code pre {
-  width: max-content; max-width: 100%; box-sizing: border-box;
+  display: flex; width: max-content; max-width: 100%; box-sizing: border-box;
   margin: 0; padding: 14px 18px 14px 14px; background: none;
   font-family: var(--hack); line-height: 1.33; color: #F8F8F2; overflow: hidden; tab-size: 4;
   /* 9pt, or smaller when the longest line (--code-cols characters, set by the engine) would not fit:
      a monospace character is about 0.602em wide */
   font-size: min(var(--code-size), calc((100cqw - 32px) / (var(--code-cols, 60) * 0.602)));
 }
-/* the engine sets counter-reset (first line number - 1) and --ln-w (digits of the last number) */
-.code code { font: inherit; color: inherit; background: none; padding: 0; display: block; }
+/* line numbers: a gutter column the engine writes before the code, out of the way of selection */
+.code .ln { flex: none; white-space: pre; text-align: right; margin-right: 1.4ch; color: #75715E; user-select: none; }
+.code code { font: inherit; color: inherit; background: none; padding: 0; display: block; min-width: 0; }
 .code .line { display: block; white-space: pre; }
-.code .line::before { counter-increment: line; content: counter(line); display: inline-block; width: var(--ln-w, 2ch); margin-right: 1.4ch; text-align: right; color: #75715E; }
 .code .hljs-keyword, .code .hljs-selector-tag, .code .hljs-literal, .code .hljs-meta .hljs-keyword { color: #F92672; }
 .code .hljs-string, .code .hljs-meta .hljs-string, .code .hljs-regexp { color: #E6DB74; }
 .code .hljs-number, .code .hljs-symbol { color: #AE81FF; }
@@ -204,27 +269,8 @@ pre.prompt .token { background: var(--mark-blue); }
 pre.prompt .sys { color: var(--code-blue); }
 pre.prompt .path { color: var(--code-green); }
 
-/* ---------- two columns: the body blocks after the lead flow into two columns ---------- */
-section.columns { display: grid; grid-template-columns: var(--column-width) var(--column-width); column-gap: var(--column-gap); align-content: start; grid-auto-rows: min-content; }
-section.columns > blockquote { grid-column: 1 / -1; }   /* footnotes stay out of the grid: absolute, from the slide edge */
-section.columns > * + * { margin-top: 0 !important; }
-/* a table, figure row or formula in a column sits at the body's left edge with a 3pt bound, and its column
-   is only as wide as it is: the other column takes the rest */
-section.columns:has(> :is(table, p.figures, p:has(> .katex-display))) { grid-template-columns: max-content 1fr; column-gap: 12px; }
-section.columns > table { justify-self: start; margin: 0 var(--bound) 0 var(--inset-body); }
-section.columns > p.figures { justify-content: flex-start; padding: 0 var(--bound) 0 var(--inset-body); }
-/* a figure in a column is as tall as the body allows (at most 1:1) and its column only as wide as that:
-   the width is worked out from the body's height and the picture's ratio (--fig-w, --fig-r by the engine),
-   since a grid column would otherwise keep the 1:1 width */
-section.columns { --fig-avail: calc(var(--body-bottom) - var(--body-top)); }
-section.columns:has(> blockquote) { --fig-avail: calc(var(--body-bottom) - var(--lead-bottom)); }
-section.columns > p.figures > img { width: min(var(--fig-w), calc(var(--fig-avail) * var(--fig-r))) !important; }
-section.columns > p.figures .figure img { width: min(var(--fig-w), calc((var(--fig-avail) - var(--run-label-height)) * var(--fig-r))) !important; }
-section.columns > p:has(> .katex-display) { padding: 0 var(--bound) 0 var(--inset-body); }
-section.columns .katex-display, section.columns .katex-display > .katex { text-align: left; }
-
 /* ---------- contents slide (front matter toc: true): each title with its subtitles, in two columns ---------- */
-section > .toc { columns: 2; column-gap: var(--space-3); padding: 0 var(--inset-body); }
+.body > .toc { columns: 2; column-gap: var(--space-3); padding: 0 var(--inset-body); }
 .toc ul { margin: 0; padding-left: 0; }
 .toc > ul > li { break-inside: avoid; padding-bottom: 4px; }   /* below, not above: a column's top stays level */
 .toc > ul > li::before { content: none; }
@@ -235,10 +281,13 @@ section > .toc { columns: 2; column-gap: var(--space-3); padding: 0 var(--inset-
 /* ---------- footnotes [1], [2] … with superscript citations, and the slide number ---------- */
 sup.fn-ref { font-size: 0.7em; line-height: 0; vertical-align: super; }
 sup.fn-ref a { color: var(--link); text-decoration: none; }
+/* the footnotes are the last block of the slide, in the band below --body-bottom (more lines push the body
+   up), from the slide's left edge */
 section > .footnotes {
-  position: absolute; left: 0; bottom: 0; min-height: calc(540px - var(--body-bottom)); max-width: var(--footnote-width); box-sizing: border-box;
+  flex: none; min-height: calc(540px - var(--body-bottom)); max-width: var(--footnote-width); box-sizing: border-box;
+  margin: auto calc(-1 * var(--margin-x)) calc(var(--body-bottom) - 540px);   /* auto: at the foot even with no body */
   /* a one-line footnote sits on the slide number's centre line; more lines grow upwards */
-  margin: 0; padding: 4px var(--space-2) calc(540px - var(--number-top) - var(--number-height) / 2 - var(--note-size) * var(--leading) / 2);
+  padding: 4px var(--space-2) calc(540px - var(--number-top) - var(--number-height) / 2 - var(--note-size) * var(--leading) / 2);
   display: flex; flex-direction: column; justify-content: flex-end;
   font-size: var(--note-size); line-height: var(--leading);
 }

@@ -8,7 +8,8 @@
 //   - a paragraph of images becomes one centred figure row; a picture is placed at 1:1 (px/2 CSS px: 2x
 //     exports at 192 px/in) unless Marp's w:/h: keywords size it; an image title ![](f.png "4-01") is its run label
 //   - tables: a `role` column (ref / a / b) tints rows and is dropped; {.settings} after a table
-//   - fences: ```algo (algorithm2e) and ```latex {.render} rendered by tex2img.sh, ```prompt marked up,
+//   - fences: ```algo (algorithm2e) and ```latex {.render} rendered by tex2img.sh, ```mermaid and ```dot as
+//     inline SVG, ```prompt marked up,
 //     every other fence monokai on a dark box with line numbers ({path="pkg/mod.py"} labels it,
 //     {start=42} sets the first line number)
 //   - inline marks: ==WIP==, [text]{.callout|.alert|.formula|.faint|.token}, # Name {.divider}
@@ -101,6 +102,7 @@ function imageSize(file) {
   let b;
   try { b = fs.readFileSync(file); } catch { return null; }
   if (b.readUInt32BE(0) === 0x89504e47) return { w: b.readUInt32BE(16), h: b.readUInt32BE(20) };
+  if (b.toString('ascii', 0, 4) === 'GIF8') return { w: b.readUInt16LE(6), h: b.readUInt16LE(8) };
   if (b[0] === 0xff && b[1] === 0xd8) {
     for (let i = 2; i + 9 < b.length;) {
       if (b[i] !== 0xff) { i++; continue; }
@@ -116,6 +118,44 @@ function naturalSize(src) {
   if (!src || /^[a-z]+:/i.test(src)) return null;
   const size = imageSize(path.resolve(process.env.RS_DECK_DIR || process.cwd(), decodeURI(src)));
   return size ? { w: size.w / 2, h: size.h / 2 } : null;
+}
+
+// ---------- media: PDF pages, videos ----------
+// ![](fig.pdf#page=2) is that page as a vector SVG (pdftocairo); ![](clip.mp4) is a <video> in --html output and
+// otherwise a poster frame (ffmpeg) with a play mark, linked to the file. A GIF needs nothing: it moves in
+// HTML, and a PDF / PPTX shows its first frame.
+const VIDEO = /\.(mp4|webm|mov|m4v|ogv)$/i;
+function cached(kind, file, extra, ext, make) {
+  const abs = path.resolve(process.env.RS_DECK_DIR || process.cwd(), decodeURI(file));
+  const stat = fs.statSync(abs);
+  const h = crypto.createHash('sha1').update([kind, abs, stat.mtimeMs, extra].join('\0')).digest('hex').slice(0, 12);
+  const out = path.join(CACHE, `${kind}-${h}.${ext}`);
+  if (!fs.existsSync(out)) { fs.mkdirSync(CACHE, { recursive: true }); make(abs, out); }
+  return out;
+}
+// embedded, so an HTML deck still shows them away from this machine's cache
+const dataUri = (file, type) => `data:${type};base64,${fs.readFileSync(file).toString('base64')}`;
+function media(t) {
+  const src = t.attrGet('src') || '';
+  if (/^[a-z]+:/i.test(src)) return;
+  const [file, hash = ''] = src.split('#');
+  try {
+    if (/\.pdf$/i.test(file)) {
+      const page = Number((hash.match(/page=(\d+)/) || [])[1] || 1);
+      const svg = cached('pdf', file, page, 'svg', (abs, out) => execFileSync('pdftocairo', ['-svg', '-f', String(page), '-l', String(page), abs, out], { stdio: 'pipe' }));
+      const tag = fs.readFileSync(svg, 'utf8').match(/<svg\b[^>]*>/)[0];
+      const [w, h] = ['width', 'height'].map((k) => Number((tag.match(new RegExp(`\\b${k}="([\\d.]+)`)) || [])[1]));
+      t.attrSet('src', dataUri(svg, 'image/svg+xml'));
+      // pdftocairo writes pt: 1:1 is pt x 4/3 px
+      if (w && h) t.meta = { ...(t.meta || {}), natural: { w: (w * 4) / 3, h: (h * 4) / 3 } };
+    } else if (VIDEO.test(file)) {
+      const poster = cached('poster', file, '', 'png', (abs, out) => execFileSync('ffmpeg', ['-v', 'error', '-y', '-ss', '0', '-i', abs, '-frames:v', '1', out], { stdio: 'pipe' }));
+      t.meta = { ...(t.meta || {}), video: src, poster };
+      t.attrSet('src', dataUri(poster, 'image/png'));
+    }
+  } catch (e) {
+    t.meta = { ...(t.meta || {}), error: String(e.message).split('\n')[0] };
+  }
 }
 
 function figures(md) {
@@ -134,15 +174,23 @@ function figures(md) {
   const image = md.renderer.rules.image;
   md.renderer.rules.image = (tokens, idx, options, env, self) => {
     const t = tokens[idx];
+    media(t);
+    if (t.meta && t.meta.error) return `<span class="alert">${md.utils.escapeHtml(t.attrGet('src'))}: ${md.utils.escapeHtml(t.meta.error)}</span>`;
     if (!/\b(w|h|width|height):/.test(t.content || '')) {      // Marp size keywords win
-      // --fig-w / --fig-r let a column size the picture from the body's height (the theme's columns rules)
-      const n = naturalSize(t.attrGet('src'));
+      // --fig-w / --fig-r let a layout size the picture from the body's height (the theme's layout rules)
+      const n = (t.meta && t.meta.natural) || naturalSize(t.meta && t.meta.poster ? t.meta.poster : t.attrGet('src'));
       if (n) t.attrJoin('style', `width:${n.w.toFixed(0)}px;--fig-w:${n.w.toFixed(0)}px;--fig-r:${(n.w / n.h).toFixed(4)}`);
     }
     const label = t.attrGet('title');
-    if (!label) return image(tokens, idx, options, env, self);
-    t.attrs = t.attrs.filter(([k]) => k !== 'title');
-    return `<span class="figure"><span class="run-label">${md.utils.escapeHtml(label)}</span>${image(tokens, idx, options, env, self)}</span>`;
+    if (label) t.attrs = t.attrs.filter(([k]) => k !== 'title');
+    let html = image(tokens, idx, options, env, self);
+    if (t.meta && t.meta.video) {
+      const esc = md.utils.escapeHtml;
+      html = process.env.RS_FORMAT === 'html'
+        ? `<video src="${esc(t.meta.video)}" poster="${esc(t.attrGet('src'))}" style="${esc(t.attrGet('style') || '')}" controls preload="metadata"></video>`
+        : `<a class="video" href="${esc(t.meta.video)}">${html}</a>`;
+    }
+    return label ? `<span class="figure"><span class="run-label">${md.utils.escapeHtml(label)}</span>${html}</span>` : html;
   };
 }
 
@@ -237,6 +285,46 @@ function numberLines(html) {
   return lines.map((l) => `<span class="line">${l || ' '}</span>`).join('');
 }
 
+// ---------- diagrams: ```mermaid and ```dot as inline SVG ----------
+// Rendered at build time (mermaid-cli through the local Chrome; Graphviz as WASM) and cached; inline SVG keeps
+// the labels vector and selectable in the PDF. A diagram is placed at 1:1, scaled by {scale=…}.
+function chromePath() {
+  if (process.env.CHROME_PATH) return process.env.CHROME_PATH;
+  for (const c of ['google-chrome', 'google-chrome-stable', 'chromium', 'chromium-browser']) {
+    try { return execFileSync('sh', ['-c', `command -v ${c}`], { encoding: 'utf8' }).trim(); } catch { /* next */ }
+  }
+  return null;
+}
+function diagram(kind, body, scale) {
+  const conf = kind === 'mermaid' ? fs.readFileSync(path.join(__dirname, 'mermaid.json'), 'utf8') : '';
+  const h = crypto.createHash('sha1').update([kind, body, conf].join('\0')).digest('hex').slice(0, 12);
+  const base = path.join(CACHE, `${kind}-${h}`);
+  try {
+    if (!fs.existsSync(base + '.svg')) {
+      fs.mkdirSync(CACHE, { recursive: true });
+      if (kind === 'dot') {
+        fs.writeFileSync(base + '.svg', execFileSync(process.execPath, [path.join(__dirname, 'dot2svg.mjs')], { input: body, stdio: 'pipe' }));
+      } else {
+        fs.writeFileSync(base + '.mmd', body);
+        fs.writeFileSync(base + '.puppeteer.json', JSON.stringify({ executablePath: chromePath(), args: ['--no-sandbox'] }));
+        execFileSync(path.join(__dirname, 'node_modules', '.bin', 'mmdc'), ['-q', '-i', base + '.mmd', '-o', base + '.svg', '-p', base + '.puppeteer.json',
+          '-c', path.join(__dirname, 'mermaid.json'), '-b', 'transparent', '-I', `mermaid-${h}`], { stdio: 'pipe' });
+      }
+    }
+  } catch (e) {
+    const msg = String(e.stderr || e.message).split('\n').filter((l) => l.trim()).slice(0, 3).join(' ');
+    return `<pre class="prompt" style="color:#CC0000">${kind} failed: ${msg.replace(/</g, '&lt;')}</pre>`;
+  }
+  let svg = fs.readFileSync(base + '.svg', 'utf8').replace(/^[\s\S]*?(?=<svg\b)/, '').replace(/<!--[\s\S]*?-->/g, '');
+  // the natural width: Graphviz gives pt, mermaid a max-width in px
+  const pt = svg.match(/<svg\b[^>]*\bwidth="([\d.]+)pt"/);
+  const px = svg.match(/max-width:\s*([\d.]+)px/);
+  const w = (pt ? (Number(pt[1]) * 4) / 3 : px ? Number(px[1]) : 0) * scale;
+  svg = svg.replace(/<svg\b[^>]*>/, (tag) => tag.replace(/\s(width|height|style)="[^"]*"/g, '')
+    .replace(/<svg\b/, `<svg${w ? ` style="width:${w.toFixed(1)}px"` : ''}`));
+  return `<div class="diagram">${svg}</div>\n`;
+}
+
 function fences(md) {
   const fence = md.renderer.rules.fence;
   md.renderer.rules.fence = (tokens, idx, options, env, self) => {
@@ -246,6 +334,8 @@ function fences(md) {
     const scale = Number(t.attrGet('scale')) || 1;
     if (lang === 'algo' || lang === 'algorithm') return texImage('algo', t.content.replace(/\n$/, ''), scale) + '\n';
     if ((lang === 'latex' || lang === 'tex') && /\brender\b/.test(cls)) return texImage('tex', t.content.replace(/\n$/, ''), scale) + '\n';
+    if (lang === 'mermaid') return diagram('mermaid', t.content, scale);
+    if (lang === 'dot' || lang === 'graphviz') return diagram('dot', t.content, scale);
     if (lang === 'prompt') return `<pre class="prompt">${promptHtml(t.content.replace(/\n$/, ''), md.utils.escapeHtml)}</pre>\n`;
     const label = t.attrGet('path');
     const start = Math.max(1, parseInt(t.attrGet('start'), 10) || 1);
@@ -253,10 +343,12 @@ function fences(md) {
     const src = t.content.replace(/\n$/, '').split('\n');
     const digits = String(start + src.length - 1).length;
     const longest = Math.max(...src.map((l) => l.replace(/\t/g, '    ').length));
-    const counter = `counter-reset: line ${start - 1}; --ln-w: ${digits}ch`;
+    // line numbers are a gutter column before the code, not part of each line: selecting or copying code
+    // (in the PDF too, where text follows the drawing order) does not pick them up
+    const gutter = src.map((_, k) => start + k).join('\n');
     const html = fence(tokens, idx, options, env, self)
       .replace(/<pre\b/, `<pre style="--code-cols: ${(longest + digits + 1.6).toFixed(1)}"`)
-      .replace(/(<code[^>]*)>([\s\S]*?)(<\/code>)/, (_, a, body, c) => `${a} style="${counter}">${numberLines(body.replace(/\n$/, ''))}${c}`);
+      .replace(/(<code[^>]*)>([\s\S]*?)(<\/code>)/, (_, a, body, c) => `<span class="ln" aria-hidden="true">${gutter}</span>${a}>${numberLines(body.replace(/\n$/, ''))}${c}`);
     return '<div class="code"><div class="code-box">' + (label ? `<div class="code-path">${md.utils.escapeHtml(label)}</div>` : '') + html + '</div></div>\n';
   };
 }
@@ -306,26 +398,51 @@ function eachLine(lines, fn) {
   }
 }
 
-/** A ### that opens a new slide may leave out its ## when the title stays the same: the previous ## is
-    repeated before it. With headingDivider that is a ### following another ### under one ##; without it,
-    a ### on a slide (after ---) that has no ## of its own. */
+/** Titles carry over so a deck writes each one once:
+    - a ### that opens a new slide may leave out its ## when the ## stays the same: the previous ## is
+      repeated before it (with headingDivider, a ### after another ### under one ##; without it, a ###
+      on a slide that has no ## of its own);
+    - a --- not followed by a heading continues the subsection on a new slide with the same ## and ###,
+      and every part's ### gets (1/N), (2/N) …;
+      with headingDivider a --- right before a # or ## is dropped (the heading breaks the slide). */
 function repeatTitles(src) {
   const lines = src.split('\n');
   const divided = DIVIDED.test(src);
-  const insert = [];
-  let h2 = null, hasH2 = false, seenH3 = false;
+  const edits = []; // [line, lines to delete, lines to insert]
+  let h2 = null, h3 = null, hasH2 = false, seenH3 = false;
+  const parts = []; // subsections continued after a ---: { line, text, n }
+  let part = null;
+  const nextLine = (i) => { let j = i + 1; while (j < lines.length && !lines[j].trim()) j++; return lines[j] || ''; };
   eachLine(lines, (l, i) => {
-    if (/^\s*(---|\*\*\*|___)\s*$/.test(l)) { hasH2 = false; seenH3 = false; return; }
+    if (/^\s*(---|\*\*\*|___)\s*$/.test(l)) {
+      hasH2 = false; seenH3 = false;
+      const next = nextLine(i);
+      // with headingDivider a # or ## breaks the slide itself: the --- in front would leave an empty slide
+      if (divided && /^#{1,2}\s/.test(next)) { edits.push([i, 1, []]); return; }
+      if (divided && h2 && /^###\s/.test(next)) { edits.push([i, 1, [`## ${h2}`]]); hasH2 = true; return; }
+      if (h2 && h3 && !/^#/.test(next)) {
+        // with headingDivider the ## breaks the slide itself; a --- as well would leave an empty slide
+        if (part.n === 1) parts.push(part);
+        const sub = { part, k: ++part.n };   // written out once the number of parts is known
+        if (divided) edits.push([i, 1, [`## ${h2}`, '', sub, '']]);
+        else edits.push([i + 1, 0, ['', `## ${h2}`, '', sub, '']]);
+        hasH2 = true; seenH3 = true;
+      }
+      return;
+    }
     const h = l.match(/^(#{1,3})\s+(.*)$/);
     if (!h) return;
-    if (h[1] === '#') { h2 = null; hasH2 = false; seenH3 = false; }
-    else if (h[1] === '##') { h2 = h[2]; hasH2 = true; seenH3 = false; }
+    if (h[1] === '#') { h2 = null; h3 = null; hasH2 = false; seenH3 = false; }
+    else if (h[1] === '##') { h2 = h[2]; h3 = null; hasH2 = true; seenH3 = false; }
     else {
-      if (h2 && (divided ? seenH3 : !hasH2)) { insert.push([i, `## ${h2}`]); hasH2 = true; }
-      seenH3 = true;
+      if (h2 && (divided ? seenH3 : !hasH2)) { edits.push([i, 0, [`## ${h2}`, '']]); hasH2 = true; }
+      h3 = h[2]; seenH3 = true;
+      part = { line: i, text: h3, n: 1 };
     }
   });
-  for (const [i, line] of insert.reverse()) lines.splice(i, 0, line, '');
+  for (const pt of parts) lines[pt.line] = `### ${pt.text} (1/${pt.n})`;
+  const line = (x) => (typeof x === 'string' ? x : `### ${x.part.text} (${x.k}/${x.part.n})`);
+  for (const [i, del, add] of edits.reverse()) lines.splice(i, del, ...add.map(line));
   return lines.join('\n');
 }
 
@@ -378,6 +495,121 @@ function tocs(md) {
     const li = (g) => `<li><a href="#${g.slide}">${g.html}</a>` +
       (g.subs.length ? `<ul>${g.subs.map((x) => `<li><a href="#${x.slide}">${x.html}</a></li>`).join('')}</ul>` : '') + '</li>';
     toks[at].content = `<div class="toc"><ul>${groups.filter(Boolean).map(li).join('')}</ul></div>\n`;
+  });
+}
+
+// ---------- callouts: > [!NOTE] … (GitHub / Obsidian) ----------
+// A blockquote whose first line is [!type] Title becomes a coloured box; any other blockquote stays the lead.
+// The Obsidian types fold into GitHub's five colours.
+const CALLOUTS = {
+  note: 'note', info: 'note', example: 'note', quote: 'note', cite: 'note',
+  tip: 'tip', hint: 'tip', success: 'tip', check: 'tip', done: 'tip',
+  important: 'important', abstract: 'important', summary: 'important', tldr: 'important', question: 'important', help: 'important', faq: 'important',
+  warning: 'warning', attention: 'warning', todo: 'warning',
+  caution: 'caution', danger: 'caution', error: 'caution', failure: 'caution', fail: 'caution', missing: 'caution', bug: 'caution',
+};
+function callouts(md) {
+  md.core.ruler.after('inline', 'rs_callouts', (state) => {
+    const toks = state.tokens;
+    for (let i = 0; i < toks.length; i++) {
+      const t = toks[i];
+      if (t.type !== 'blockquote_open' || toks[i + 1]?.type !== 'paragraph_open' || toks[i + 2]?.type !== 'inline') continue;
+      const inl = toks[i + 2], kids = inl.children || [];
+      // the marker may be split over several text tokens ([, !note, ]) before text_join runs
+      let head = '', k = 0, m = null;
+      for (; k < kids.length && /^text/.test(kids[k].type); k++) {
+        head += kids[k].content;
+        if ((m = head.match(/^\[!(\w+)\][+-]?[ \t]*/))) break;
+        if (!/^\[!?\w*\]?$/.test(head)) break;
+      }
+      if (!m) continue;
+      const type = m[1].toLowerCase();
+      let depth = 0, j = i;
+      for (; j < toks.length; j++) {
+        if (toks[j].type === 'blockquote_open') depth++;
+        else if (toks[j].type === 'blockquote_close' && --depth === 0) break;
+      }
+      t.tag = toks[j].tag = 'div';
+      t.meta = { ...(t.meta || {}), callout: true };
+      t.attrJoin('class', `admonition admonition-${CALLOUTS[type] || 'note'}`);
+      // the title is the rest of the marker's line; the body starts after the first line break
+      const text = (c) => Object.assign(new state.Token('text', '', 0), { content: c });
+      const brk = kids.findIndex((c, x) => x > k && (c.type === 'softbreak' || c.type === 'hardbreak'));
+      const titleKids = [text(head.slice(m[0].length)), ...kids.slice(k + 1, brk < 0 ? kids.length : brk)];
+      const rest = brk < 0 ? [] : kids.slice(brk + 1);
+      const title = new state.Token('inline', '', 0);
+      title.children = titleKids.some((c) => c.type !== 'text' || c.content.trim()) ? titleKids : [text(type[0].toUpperCase() + type.slice(1))];
+      const open = new state.Token('paragraph_open', 'p', 1);
+      open.block = true;
+      open.attrJoin('class', 'admonition-title');
+      const close = new state.Token('paragraph_close', 'p', -1);
+      close.block = true;
+      if (rest.length) { inl.children = rest; toks.splice(i + 1, 0, open, title, close); }
+      else toks.splice(i + 1, 3, open, title, close);
+    }
+  });
+}
+
+// ---------- the body box and its layout ----------
+// Every content slide's body (after the title, subtitle and lead, before the footnotes) is wrapped in
+// <div class="body">, the box from the lead (or the line) down to the footnotes. <!-- _layout: … --> makes
+// it a grid: a preset (two, fit-left, fit-right, img-left, img-right, rows) or a CSS grid-template of named
+// areas ("a b" "a c" / auto 1fr); `middle` centres it vertically. ::: name … ::: puts blocks in an area;
+// blocks outside any area fill the cells in order. The old _class: columns picks a preset from its first block.
+const LAYOUTS = ['two', 'fit-left', 'fit-right', 'img-left', 'img-right', 'rows'];
+function layoutOf(value) {
+  const custom = (value.match(/"[^"]*"[^"]*/g) || []).join('').replace(/\bmiddle\b/g, '').trim();
+  const words = value.replace(/"[^"]*"/g, ' ').split(/[\s/]+/);
+  const preset = LAYOUTS.find((n) => words.includes(n));
+  const cls = ['body'];
+  if (custom || preset) cls.push('layout');
+  if (preset && !custom) cls.push(`layout-${preset}`);
+  if (words.includes('middle')) cls.push('middle');
+  const style = custom ? ` style='grid-template: ${custom.replace(/[<>']/g, '')}'` : '';
+  return `<div class="${cls.join(' ')}"${style}>\n`;
+}
+function bodies(md) {
+  const Token = md.core.State.prototype.Token;
+  const html = (content) => Object.assign(new Token('html_block', '', 0), { content, block: true });
+  md.core.ruler.after('rs_slide_types', 'rs_bodies', (state) => {
+    const toks = state.tokens;
+    const out = [];
+    let slide = null;
+    const wrap = (sl) => {
+      if (/\b(title|section|divider)\b/.test(sl.open.attrGet('class') || '')) return sl.toks;
+      const ts = sl.toks;
+      let depth = 0, start = -1, end = ts.length, lead = false, layout = null;
+      for (let i = 0; i < ts.length; i++) {
+        const t = ts[i];
+        if (t.type === 'marpit_comment') {
+          const m = t.content.match(/(?:^|\n)\s*_?layout\s*:\s*(.+)/);
+          if (m) layout = m[1].trim();
+        }
+        if (t.type === 'rs_footnotes' && depth === 0) { end = i; break; }
+        if (depth === 0 && start < 0) {
+          const skip = t.type === 'front_matter' || /^marpit_/.test(t.type) || (t.type === 'html_block' && /^\s*<(style|!--)/i.test(t.content));
+          const header = t.type === 'heading_open' && (t.tag === 'h2' || t.tag === 'h3');
+          const isLead = t.type === 'blockquote_open' && !(t.meta && t.meta.callout) && !lead;
+          if (isLead) lead = true;
+          if (!skip && !header && !isLead && t.nesting >= 0 && t.type !== 'inline') start = i;
+        }
+        depth += t.nesting;
+      }
+      if (start < 0) start = end;
+      if (!layout && /\bcolumns\b/.test(sl.open.attrGet('class') || '')) {
+        const f = ts[start];
+        if (f && f.type === 'table_open') layout = 'fit-left';
+        else if (f && f.type === 'paragraph_open' && /\bfigures\b/.test(f.attrGet('class') || '')) layout = 'img-left';
+        else layout = 'two';
+      }
+      return [...ts.slice(0, start), html(layoutOf(layout || '')), ...ts.slice(start, end), html('</div>\n'), ...ts.slice(end)];
+    };
+    for (const t of toks) {
+      if (t.type === 'marpit_slide_open') { slide = { open: t, toks: [] }; out.push(t); continue; }
+      if (t.type === 'marpit_slide_close' && slide) { out.push(...wrap(slide), t); slide = null; continue; }
+      (slide ? slide.toks : out).push(t);
+    }
+    toks.splice(0, toks.length, ...out);
   });
 }
 
@@ -486,11 +718,26 @@ module.exports = ({ marp }) => {
   const thanks = (src) => (process.env.RS_THANKS ? `${src.replace(/\s*$/, '')}\n\n${DIVIDED.test(src) ? '' : '---\n\n'}# ${process.env.RS_THANKS}\n` : src);
   const parse = marp.markdown.parse.bind(marp.markdown);
   marp.markdown.parse = (src, env) => parse(thanks(insertToc(repeatTitles(src))), env);
+  // slides.sh --html: the presenting tools (laser, pen, click to turn) go in after the slides
+  if (process.env.RS_FORMAT === 'html') {
+    const render = marp.render.bind(marp);
+    const script = fs.readFileSync(path.join(SKILL, 'assets', 'marp', 'present.js'), 'utf8').replace(/<\/script/gi, '<\\/script');
+    marp.render = (...args) => { const out = render(...args); out.html += `<script>${script}</script>`; return out; };
+  }
   return marp
     .use(require('markdown-it-footnote'))
     .use(require('markdown-it-mark'))
     .use(require('markdown-it-bracketed-spans'))
     .use(require('markdown-it-attrs'), { allowedAttributes: ['class', 'style', 'scale', 'path', 'start'] })
+    .use(require('markdown-it-container'), 'area', {
+      validate: (params) => /^[A-Za-z][\w-]*(\s+[\w-]+)*$/.test(params.trim()),
+      render: (tokens, idx) => {
+        if (tokens[idx].nesting !== 1) return '</div>\n';
+        const [name, ...cls] = tokens[idx].info.trim().split(/\s+/);
+        return `<div class="${['area', ...cls].join(' ')}" style="grid-area: ${name}">\n`;
+      },
+    })
+    .use(callouts)
     .use(mathMacros)
     .use(figures)
     .use(tables)
@@ -498,7 +745,8 @@ module.exports = ({ marp }) => {
     .use(marks)
     .use(tocs)
     .use(footnotes)
-    .use(slideTypes);
+    .use(slideTypes)
+    .use(bodies);
 };
 module.exports.expand = expand;
 module.exports.readMacros = readMacros;
