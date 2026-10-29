@@ -1,0 +1,13 @@
+{
+  "name": "slide-maker-scripts",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Markdown to slides with Marp (slide-maker skill)",
+  "dependencies": {
+    "@marp-team/marp-cli": "^4.5.1",
+    "markdown-it-attrs": "^4.5.0",
+    "markdown-it-bracketed-spans": "^1.0.3",
+    "markdown-it-footnote": "^4.0.0",
+    "markdown-it-mark": "^4.0.0"
+  }
+}

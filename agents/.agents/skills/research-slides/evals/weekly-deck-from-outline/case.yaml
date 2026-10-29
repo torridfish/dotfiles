@@ -1,7 +1,0 @@
-schema_version: "1.1"
-name: weekly-deck-from-outline
-expected_outcome: |
-  A 2026-11-05/ folder holding a .pptx built with the skill's deck.js (cover, photo section with the issue link,
-  a content slide with the 22pt title / 12.5pt amber topic / 1pt rule and the placeholder figure, a results table
-  with the reference row gray, our rows blue, the baseline orange and 4-21's Acc@0.25 bold, and a TODO slide),
-  plus the Node build script; the reply is in Traditional Chinese and names the placeholder figure as owed content.

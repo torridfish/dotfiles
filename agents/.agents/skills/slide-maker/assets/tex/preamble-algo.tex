@@ -1,0 +1,10 @@
+% slide-maker — pseudocode preamble (algorithm2e, ruled, line numbers).
+\documentclass[preview,border=4pt,varwidth=true]{standalone}
+\usepackage{amsmath,amssymb,bm}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\SetKwInOut{Input}{Input}\SetKwInOut{Output}{Output}
+\SetKwComment{Comment}{$\triangleright$ }{}
+\DontPrintSemicolon
+\newcommand{\LLM}{\mathrm{LLM}}
+\newcommand{\tok}[1]{\langle\mathrm{#1}\rangle}
+\DeclareMathOperator*{\argmax}{arg\,max}
