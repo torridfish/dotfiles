@@ -43,64 +43,65 @@ const formula = (text) => ({ text, options: { bold: true, color: T.alertDeep } }
 const br = (run) => { const r = typeof run === 'string' ? { text: run, options: {} } : run; r.options = Object.assign({}, r.options, { breakLine: true }); return r; };
 const norm = (parts) => parts.map((p) => (typeof p === 'string' ? { text: p } : p));
 
+// Explicit boxes, not layout placeholders: pptxgenjs placeholder shapes lose their link to the layout
+// (no <p:ph> on the slide), so LibreOffice and Google Slides drop them at the top-left corner. Every text
+// box below carries its own geometry and style, so the deck renders the same everywhere.
+const BOX = {
+  title: { x: L.headerLeft, y: L.titleTop, w: 9.2, h: 0.45, fontSize: 22, bold: false, fontFace: F.sans, color: T.ink, align: 'left', valign: 'top', margin: 0, isTextBox: true, objectName: 'Title' },
+  topic: { x: L.headerLeft, y: L.topicTop, w: 9.2, h: 0.30, fontSize: 12.5, fontFace: F.sans, color: T.amber, align: 'left', valign: 'top', margin: 0, isTextBox: true, objectName: 'Topic' },
+  lead: { x: L.margin, y: L.leadTop, w: 9.33, h: 0.61, fontSize: 12, fontFace: F.serif, color: T.ink, align: 'left', valign: 'top', margin: INS, isTextBox: true, objectName: 'Lead' },
+  foot: { x: 0, y: L.footTop, w: 8.6, h: 0.39, fontSize: 8, fontFace: F.sans, color: T.ink, align: 'left', valign: 'middle', margin: INS, isTextBox: true, objectName: 'Footnote' },
+  coverTitle: { x: 0.34, y: 1.84, w: 9.32, h: 1.94, fontSize: 26, bold: true, fontFace: F.sans, color: T.ink, align: 'left', valign: 'middle', margin: 0, isTextBox: true, objectName: 'Cover title' },
+  coverSub: { x: 0.36, y: 4.34, w: 9.32, h: 1.0, fontSize: 14, bold: true, fontFace: F.serif, color: T.inkMuted, align: 'left', valign: 'middle', margin: 0, isTextBox: true, objectName: 'Cover subtitle' },
+  divider: { x: L.margin, y: L.dividerTop, w: 9.33, h: 0.48, fontSize: 22, bold: false, fontFace: F.sans, color: T.ink, align: 'center', valign: 'top', margin: 2.7, isTextBox: true, objectName: 'Divider' },
+};
+
 function create({ title = 'Research Slides deck', author = '', subject = '' } = {}) {
   const pres = new pptxgen();
   pres.layout = 'LAYOUT_16x9';
   pres.theme = { headFontFace: F.sans, bodyFontFace: F.sans };
   pres.title = title; if (author) pres.author = author; if (subject) pres.subject = subject;
-  const C = pres.SchemeColor;
   const photo = path.join(ASSETS, 'cover-temple-night.jpg');
-  const num = { slideNumber: { x: L.numberLeft, y: 5.28, w: 0.89, h: 0.30, fontSize: 12, fontFace: F.sans, color: C.text1, align: 'center', valign: 'middle', margin: [3.6, 7.2, 3.6, 7.2] } };
-  const foot = { placeholder: { options: { name: 'footnote', type: 'body', x: 0, y: L.footTop, w: 8.6, h: 0.39, fontSize: 8, fontFace: F.sans, color: C.text1, valign: 'middle', margin: INS, bullet: false }, text: '' } };
-  const header = [
-    { placeholder: { options: { name: 'title', type: 'title', x: L.headerLeft, y: L.titleTop, w: 9.2, h: 0.45, fontSize: 22, bold: false, fontFace: F.sans, color: C.text1, align: 'left', valign: 'top', margin: 0 }, text: '' } },
-    { placeholder: { options: { name: 'topic', type: 'body', x: L.headerLeft, y: L.topicTop, w: 9.2, h: 0.30, fontSize: 12.5, fontFace: F.sans, color: C.accent1, align: 'left', valign: 'top', margin: 0, bullet: false }, text: '' } },
-    { line: { x: L.headerLeft, y: L.ruleTop, w: 9.2, h: 0, line: { color: C.text1, width: 1 } } },
-  ];
-  const coverObjs = [
-    { rect: { x: 0, y: 0, w: L.width, h: L.height, fill: { color: 'FFFFFF', transparency: 22 }, line: { type: 'none' } } },
-    { placeholder: { options: { name: 'title', type: 'title', x: 0.34, y: 1.84, w: 9.32, h: 1.94, fontSize: 26, bold: true, fontFace: F.sans, color: C.text1, align: 'left', valign: 'middle', margin: 0 }, text: '' } },
-  ];
-  pres.defineSlideMaster({ title: 'COVER', background: { path: photo }, objects: [...coverObjs,
-    { placeholder: { options: { name: 'subtitle', type: 'body', x: 0.36, y: 4.34, w: 9.32, h: 1.0, fontSize: 14, bold: true, fontFace: F.serif, color: C.text2, align: 'left', valign: 'middle', margin: 0, bullet: false }, text: '' } }] });
-  pres.defineSlideMaster({ title: 'SECTION', background: { path: photo }, objects: [...coverObjs, foot], ...num });
-  pres.defineSlideMaster({ title: 'DIVIDER', background: { color: 'FFFFFF' }, objects: [
-    { placeholder: { options: { name: 'title', type: 'title', x: L.margin, y: L.dividerTop, w: 9.33, h: 0.48, fontSize: 22, bold: false, fontFace: F.sans, color: C.text1, align: 'center', valign: 'top', margin: 2.7 }, text: '' } }], ...num });
-  pres.defineSlideMaster({ title: 'CONTENT', background: { color: 'FFFFFF' }, objects: [...header, foot], ...num });
-  pres.defineSlideMaster({ title: 'CONTENT_LEAD', background: { color: 'FFFFFF' }, objects: [...header,
-    { placeholder: { options: { name: 'lead', type: 'body', x: L.margin, y: L.leadTop, w: 9.33, h: 0.61, fontSize: 12, fontFace: F.serif, color: C.text1, align: 'left', valign: 'top', margin: INS, bullet: false }, text: '' } }, foot], ...num });
+  const num = { slideNumber: { x: L.numberLeft, y: 5.28, w: 0.89, h: 0.30, fontSize: 12, fontFace: F.sans, color: T.ink, align: 'center', valign: 'middle', margin: [3.6, 7.2, 3.6, 7.2] } };
+  const veil = { rect: { x: 0, y: 0, w: L.width, h: L.height, fill: { color: 'FFFFFF', transparency: 22 }, line: { type: 'none' } } };
+  const rule = { line: { x: L.headerLeft, y: L.ruleTop, w: 9.2, h: 0, line: { color: T.ink, width: 1 } } };
+  pres.defineSlideMaster({ title: 'COVER', background: { path: photo }, objects: [veil] });
+  pres.defineSlideMaster({ title: 'SECTION', background: { path: photo }, objects: [veil], ...num });
+  pres.defineSlideMaster({ title: 'DIVIDER', background: { color: 'FFFFFF' }, objects: [], ...num });
+  pres.defineSlideMaster({ title: 'CONTENT', background: { color: 'FFFFFF' }, objects: [rule], ...num });
+  pres.defineSlideMaster({ title: 'CONTENT_LEAD', background: { color: 'FFFFFF' }, objects: [rule], ...num });
 
   const lines = (items) => items.flatMap((it, i) => { const runs = norm(Array.isArray(it) ? it : [it]); if (i < items.length - 1) runs[runs.length - 1] = br(runs[runs.length - 1]); return runs; });
-  const footnotes = (s, notes) => { if (notes && notes.length) s.addText(lines(notes), { placeholder: 'footnote' }); };
+  const footnotes = (s, notes) => { if (notes && notes.length) s.addText(lines(notes), BOX.foot); };
 
   const deck = {
-    pres, T, L, F,
+    pres, T, L, F, BOX,
     /** Cover: photo under veil, 26pt bold title, serif project + date lines. */
     cover({ title = 'Progress Report', project, date, notes }) {
       const s = pres.addSlide({ masterName: 'COVER' });
-      s.addText(title, { placeholder: 'title' });
-      s.addText([br(project), { text: date }], { placeholder: 'subtitle' });
+      s.addText(title, BOX.coverTitle);
+      s.addText([br(project), { text: date }], BOX.coverSub);
       if (notes) s.addNotes(notes);
       return s;
     },
     /** Photo section slide: the cover without the subtitle; optional footnote (e.g. the tracking issue). */
     section({ title, footnotes: fn, notes }) {
       const s = pres.addSlide({ masterName: 'SECTION' });
-      s.addText(title, { placeholder: 'title' }); footnotes(s, fn); if (notes) s.addNotes(notes);
+      s.addText(title, BOX.coverTitle); footnotes(s, fn); if (notes) s.addNotes(notes);
       return s;
     },
     /** Plain divider: one centred line (a presenter's name in a shared deck, or a sub-section). */
     divider(text, { notes } = {}) {
       const s = pres.addSlide({ masterName: 'DIVIDER' });
-      s.addText(text, { placeholder: 'title' }); if (notes) s.addNotes(notes);
+      s.addText(text, BOX.divider); if (notes) s.addNotes(notes);
       return s;
     },
     /** Content slide: category title + topic; lead = array of serif sentences (omit for no lead). */
     content({ title, topic, lead, footnotes: fn, notes }) {
       const s = pres.addSlide({ masterName: lead ? 'CONTENT_LEAD' : 'CONTENT' });
-      s.addText(title, { placeholder: 'title' });
-      if (topic) s.addText(topic, { placeholder: 'topic' });
-      if (lead) s.addText(lines(lead), { placeholder: 'lead' });
+      s.addText(title, BOX.title);
+      if (topic) s.addText(topic, BOX.topic);
+      if (lead) s.addText(lines(lead), BOX.lead);
       footnotes(s, fn); if (notes) s.addNotes(notes);
       return s;
     },
