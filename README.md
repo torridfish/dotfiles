@@ -8,7 +8,7 @@ Each top-level directory is a **stow package** that mirrors the target structure
 
 ```
 dotfiles/
-├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode)
+├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); research-slides is also linked into ~/.claude/skills and ~/.codex/skills
 ├── autostart/    → ~/.config/autostart/*.desktop
 ├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
 ├── btop/         → ~/.config/btop/btop.conf
@@ -75,7 +75,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 
 | Package | Contents |
 |---|---|
-| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker |
+| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, research-slides (deck builder + TeX/Carbon/draw.io figure pipelines for the Research Slides design system; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`) |
 | `bash` | bashrc / profile / bash_logout |
 | `btop` | System monitor config (btop 1.4+) |
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |

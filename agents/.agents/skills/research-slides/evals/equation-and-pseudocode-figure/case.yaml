@@ -1,0 +1,7 @@
+schema_version: "1.1"
+name: equation-and-pseudocode-figure
+expected_outcome: |
+  figures/ holds a PNG (and SVG) of the pointer loss rendered through tex2img.sh with its .tex beside it, and a
+  PNG of an algorithm2e listing (ruled, line numbers, Input/Output, no semicolons) rendered through
+  tex2img.sh --algo with its body .tex beside it; no web renderer was used and the reply states the placement size
+  (px/400 in) for each picture.
