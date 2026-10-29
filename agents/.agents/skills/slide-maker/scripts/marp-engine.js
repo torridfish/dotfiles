@@ -1,7 +1,9 @@
 // Marp engine for slide-maker decks (used by scripts/marp.config.js). On top of Marp it adds:
 //   - the slide-maker theme, with the cover photo resolved to this skill's copy
 //   - the math preamble's macros (\LLM, \Lloss{LM}, \tok{OBJ}, \argmax …) expanded inside $…$ / $$…$$
-//   - footnotes numbered *1, *2 per slide and set at the foot of the slide that cites them
+//   - footnotes numbered [1], [2] per slide and set at the foot of the slide that cites them; a citation is a
+//     superscript [1] linking to its footnote
+//   - a slide type as a class on every slide: title, section, divider (see the theme's header)
 //   - a paragraph of images becomes one centred figure row; a picture is placed at 1:1 (px/2 CSS px: 2x
 //     exports at 192 px/in) unless Marp's w:/h: keywords size it; an image title ![](f.png "4-01") is its run label
 //   - tables: a `role` column (ref / a / b) tints rows and is dropped; {.settings} after a table
@@ -272,15 +274,16 @@ function footnotes(md) {
       if (t.type === 'inline' && slide) for (const c of t.children || []) {
         if (c.type !== 'footnote_ref') continue;
         if (!slide.ids.includes(c.meta.id)) slide.ids.push(c.meta.id);
-        c.meta.rsMarker = `*${slide.ids.indexOf(c.meta.id) + 1}`;
+        c.meta.rsSlide = n;
+        c.meta.rsNumber = slide.ids.indexOf(c.meta.id) + 1;
       }
       if (t.type === 'marpit_slide_close' && slide) {
-        const items = slide.ids.map((fid, k) => ({ marker: `*${k + 1}`, children: defs[fid] || [] }));
-        for (const d of uncited.filter((d) => slideOf(d.line ?? 0) === n)) items.push({ marker: `*${items.length + 1}`, children: d.children });
+        const items = slide.ids.map((fid, k) => ({ number: k + 1, children: defs[fid] || [] }));
+        for (const d of uncited.filter((d) => slideOf(d.line ?? 0) === n)) items.push({ number: items.length + 1, children: d.children });
         if (items.length) {
           const ft = new state.Token('rs_footnotes', 'div', 0);
           ft.block = true;
-          ft.meta = { items };
+          ft.meta = { items, slide: n };
           out.push(ft);
         }
       }
@@ -288,11 +291,43 @@ function footnotes(md) {
     }
     state.tokens = out;
   });
-  md.renderer.rules.footnote_ref = (tokens, idx) => `<span class="fn-mark">${tokens[idx].meta.rsMarker || '*' + (tokens[idx].meta.id + 1)}</span>`;
+  md.renderer.rules.footnote_ref = (tokens, idx) => {
+    const { rsSlide, rsNumber, id } = tokens[idx].meta;
+    const k = rsNumber || id + 1;
+    return `<sup class="fn-ref"><a href="#fn-${rsSlide ?? 0}-${k}">[${k}]</a></sup>`;
+  };
   // uncited definitions were taken before text_join, so escapes (\*) are still text_special tokens
   const joinText = (children) => children.map((c) => (c.type === 'text_special' ? Object.assign(Object.create(Object.getPrototypeOf(c)), c, { type: 'text' }) : c));
   md.renderer.rules.rs_footnotes = (tokens, idx, options, env, self) =>
-    '<div class="footnotes">' + tokens[idx].meta.items.map((it) => `<div><span class="fn-mark">${it.marker}</span> ${self.renderInline(joinText(it.children), options, env)}</div>`).join('') + '</div>\n';
+    '<div class="footnotes">' + tokens[idx].meta.items.map((it) => `<div id="fn-${tokens[idx].meta.slide}-${it.number}">[${it.number}] ${self.renderInline(joinText(it.children), options, env)}</div>`).join('') + '</div>\n';
+}
+
+// ---------- slide types: title, section, divider as a class on the slide ----------
+// # + a subtitle paragraph is the title page; a last slide holding only a # line is the thanks page (same
+// layout); # alone elsewhere is a section page; # Name {.divider} is a plain divider.
+function slideTypes(md) {
+  md.core.ruler.after('marpit_directives_apply', 'rs_slide_types', (state) => {
+    const slides = [];
+    let cur = null, depth = 0;
+    for (const t of state.tokens) {
+      if (t.type === 'marpit_slide_open') { cur = { open: t, h1: null, para: false, other: false }; slides.push(cur); depth = 0; continue; }
+      if (t.type === 'marpit_slide_close') { cur = null; continue; }
+      if (!cur || /^marpit_/.test(t.type)) continue;
+      if (depth === 0 && !['html_block', 'front_matter', 'rs_footnotes', 'heading_close', 'paragraph_close', 'inline'].includes(t.type)) {
+        if (t.type === 'heading_open' && t.tag === 'h1' && !cur.h1) cur.h1 = t;
+        else if (t.type === 'paragraph_open') cur.para = true;
+        else cur.other = true;
+      }
+      depth += t.nesting;
+    }
+    slides.forEach((sl, i) => {
+      if (!sl.h1) return;
+      let type = 'section';
+      if (/\bdivider\b/.test(sl.h1.attrGet('class') || '')) type = 'divider';
+      else if (!sl.other && (sl.para || i === slides.length - 1)) type = 'title';
+      sl.open.attrJoin('class', type);
+    });
+  });
 }
 
 module.exports = ({ marp }) => {
@@ -306,7 +341,8 @@ module.exports = ({ marp }) => {
     .use(figures)
     .use(tables)
     .use(fences)
-    .use(footnotes);
+    .use(footnotes)
+    .use(slideTypes);
 };
 module.exports.expand = expand;
 module.exports.readMacros = readMacros;

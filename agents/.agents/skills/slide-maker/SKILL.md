@@ -21,7 +21,7 @@ Use what the catalogue offers. When a slide needs a layout or a mark it does not
 
 ## Writing conventions
 
-- A weekly deck runs title page → (section page → content slides)* → TODO, twelve to twenty-five content slides, one message per slide. A slide that cannot be named by a title and a subtitle is two slides.
+- A weekly deck runs title page → (section page → content slides)* → TODO → `# Thanks for listening.`, twelve to twenty-five content slides, one message per slide. A slide that cannot be named by a title and a subtitle is two slides.
 - The title (`##`) is the category of the slide, a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period.
 - The lead (`>`) states the claim or the question in one or two sentences; bold the one term the slide turns on.
 - Name runs by their ID and use it as a noun: 2-92, 4-00, 4-03. A run ID above a figure is the image title (`![](f.png "4-03")`); one called out in text is `[4-03]{.callout}`.

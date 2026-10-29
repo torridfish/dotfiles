@@ -17,7 +17,7 @@ A deck is one Markdown file rendered by Marp in the `slide-maker` theme
 ---
 marp: true
 theme: slide-maker
-paginate: true        # slide numbers (never on the cover)
+paginate: true        # slide number at the bottom right of every slide
 headingDivider: 2     # every # and ## starts a slide, so no --- is needed
 ---
 ```
@@ -27,38 +27,42 @@ in Marp, so a body rule inside a slide is `<hr class="rule">`.
 
 ## Slide types
 
-The theme reads the type from the Markdown:
+All text is Times New Roman: 24pt titles, 14pt subtitles and leads, 11pt body, 9pt tables, 8pt footnotes,
+single line spacing (code stays monospace, math is KaTeX). The engine reads each slide's type from the
+Markdown:
 
 ```markdown
-# Progress Report            <- cover: # title + a subtitle paragraph (photo under the veil, no number)
+# Progress Report            <- title page: # title + a subtitle paragraph, centred on the photo
 
-Woven Anypoint Project
-Nov. 5, 2026
+LRM Baseline on Math
+Oct. 31, 2026
 
-# Does KV cache help?        <- photo section slide: # title alone
+# Does KV cache help?        <- section page: # title alone, on the photo
 
-# 冠霆 {.divider}             <- plain divider
+# 冠霆 {.divider}             <- plain divider: one centred line on white
 
-## Experiment                <- content slide: category title
-### Category C: KV cache     <- amber topic (the 1pt rule comes with the ##)
+## Experiment                <- content slide: title (24pt)
+### Category C: KV cache     <- subtitle (14pt, amber), with the line under it
 
-> Will KV cache benefit **downstream** tasks?[^kv]    <- lead
+> Will KV cache benefit **downstream** tasks?[^kv]    <- lead (14pt); [^kv] becomes a superscript [1]
 
 ![](figures/kv.png "4-01")   <- figure; the title is its run label
 
-[^kv]: Proposal should be scene-shared.               <- footnote *1 at the foot of this slide
+[^kv]: Proposal should be scene-shared.               <- [1] Proposal … at the foot of this slide
+
+# Thanks for listening.      <- a last slide holding only a # line takes the title-page layout
 ```
 
-Whole-slide classes go in a comment on the slide: `<!-- _class: columns -->` (body blocks after the lead
-fill two 4.55in columns in order; wrap several blocks in a `<div>` to keep them in one column),
-`<!-- _class: prose -->` (13pt prose for a discussion page), `<!-- _class: equation -->` (display math at
-1.5x on a slide that is only the equation). Classes combine: `<!-- _class: columns prose -->`.
+Whole-slide classes go in a comment on a content slide: `<!-- _class: columns -->` (body blocks after the
+lead fill two columns in order; wrap several blocks in a `<div>` to keep them in one column),
+`<!-- _class: prose -->` (body text at 14pt for a discussion page), `<!-- _class: equation -->` (display
+math at 1.5x on a slide that is only the equation). Classes combine: `<!-- _class: columns prose -->`.
 
 ## Body
 
 | Markdown | Renders as |
 | --- | --- |
-| paragraphs | body text, 12pt Times, no paragraph spacing |
+| paragraphs | body text, 11pt, no paragraph spacing |
 | `- item` / `1. item` | typed dashes (`- `), numbers, `a.` for a nested ordered list |
 | a paragraph of only images | one centred figure row, 0.25in apart; each picture at 1:1 (a 2x export at px/192 in), shrunk only when the row or the body is too small |
 | `![w:300](f.png)` | Marp's size keywords still work for one picture |
@@ -71,7 +75,7 @@ fill two 4.55in columns in order; wrap several blocks in a `<div>` to keep them 
 | ` ```prompt ` | prompt template as text: `System:` bold, `{placeholder}` bold red, `<\|im_start\|>` on mark-blue |
 | a table | results table, centred and compact (1px cell padding): bold header on gray, 9pt, hairline grid |
 | a `role` column (`ref`, `a`, `b`) | row tints (reference gray, group blue, group orange); the column is not shown |
-| a table, a blank line, `{.settings}` | settings / literature table: blue header, 8pt, short columns centred |
+| a table, a blank line, `{.settings}` | settings / literature table: blue header, left-aligned, short columns centred |
 | `<hr class="rule">` | body rule splitting the page |
 | `<!-- text -->` | speaker notes |
 
@@ -85,7 +89,7 @@ Inline HTML is on, so a one-off adjustment stays in the Markdown:
 ```markdown
 <style scoped>
 p.figures { flex: 1 1 0; } p.figures img { height: 100%; width: auto; }   /* fill the body on this slide */
-table { font-size: 10.67px; }           /* table-dense */
+table { font-size: 10.67px; }           /* an 8pt table on a crowded slide */
 </style>
 ```
 
@@ -99,24 +103,26 @@ Every anchor is a CSS variable in `:root` at the top of `assets/marp/slide-maker
 
 | Variable | Default | What it places |
 | --- | --- | --- |
-| `--title-top`, `--title-height` | 19, 43 | the category title |
-| `--topic-top`, `--topic-height` | 60, 29 | the amber topic line |
-| `--rule-top` | 96 | the 1pt rule under the header |
-| `--body-top` | 98 | the lead, or the body when there is no lead |
-| `--lead-bottom` | 149 | where the body starts under a lead |
-| `--body-bottom` | 499 | the bottom of the body box |
-| `--margin-x`, `--header-left`, `--header-width` | 32, 38, 883 | side margin of the body; left and width of the header |
-| `--table-indent`, `--column-width`, `--column-gap` | 22, 437, 22 | table-left offset; the two columns |
-| `--run-label-height` | 26 | space a run label takes above its figure |
-| `--footnote-width`, `--footnote-height` | 830, 37 | the footnote band at the bottom-left |
-| `--number-left`, `--number-top`, `--number-width`, `--number-height` | 894, 507, 85, 29 | the slide number |
-| `--cover-title-*`, `--cover-sub-*`, `--divider-*` | | cover title, cover subtitle, plain divider line |
+| `--title-size`, `--subtitle-size`, `--body-size`, `--table-size`, `--note-size` | 24, 14, 11, 9, 8 pt | the type sizes |
+| `--title-top`, `--title-height` | 22, 46 | the title box (text sits on its bottom) |
+| `--subtitle-top`, `--subtitle-height` | 68, 30 | the subtitle box (text centred in it) |
+| `--rule-top` | 98 | the line under the subtitle |
+| `--body-top` | 106 | the lead, or the body when there is no lead |
+| `--lead-bottom` | 150 | where the body starts under a lead, at the earliest |
+| `--body-bottom` | 504 | the bottom of the body box; footnotes sit below it |
+| `--margin-x`, `--header-inset` | 32, 4 | side margin of header, line and body; title text inset |
+| `--column-width`, `--column-gap` | 437, 22 | the two columns |
+| `--run-label-height` | 22 | space a run label takes above its figure |
+| `--footnote-width` | 860 | widest a footnote line runs, from the left edge |
+| `--number-left`, `--number-top`, `--number-width`, `--number-height` | 900, 508, 50, 28 | the slide number |
+| `--cover-title-*`, `--cover-sub-*` | | title-page title and subtitle (centred) |
+| `--section-title-*`, `--divider-*` | | section-page title; plain divider line |
 
 Moving the rule means moving `--body-top` and `--lead-bottom` with it, so the lead stays under the rule.
 
 ## Notes
 
 - Render caches: TeX renders live in `~/.cache/slide-maker/tex/`, keyed by content.
-- Footnotes are numbered per slide in the order they are cited; a definition nobody cites (a caveat or link for the whole slide) goes, after the cited ones, to the slide whose source it sits in.
+- Footnotes are numbered [1], [2] per slide in the order they are cited; a citation is a superscript [1] that links to its footnote in the PDF. A definition nobody cites (a caveat or link for the whole slide) goes, after the cited ones, to the slide whose source it sits in.
 - Marp does not warn about overflow: read the PDF pages before handing a deck over.
 - Local images need no flag: `slides.sh` runs Marp with local file access on.

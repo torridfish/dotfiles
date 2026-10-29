@@ -1,41 +1,51 @@
 /* @theme slide-maker */
-/* slide-maker theme for Marp. The canvas is a 10 x 5.625 in slide at 96 px/in; every anchor of
-   the slide is a layout variable in :root below, so moving the header, the body box or
-   the footnote band is a change there. Slide types are read from the Markdown itself:
-     # Title + a subtitle paragraph  -> cover      # Title alone -> photo section slide
-     # Name {.divider}               -> plain divider
-     ## Category  ### topic  > lead  -> content slide (title, amber topic, 1pt rule, lead, body)
-   Classes for a whole slide (<!-- _class: … -->): columns, prose, equation.
-   The cover photo URL placeholder is filled in by scripts/marp-engine.js. */
-
+/* slide-maker theme for Marp. The canvas is a 10 x 5.625 in slide at 96 px/in; every anchor and size is a
+   variable in :root below, so moving the header, the body box or the footnote band is a change there.
+   All text is Times New Roman at three sizes (24pt title, 14pt subtitle and lead, 11pt body), 9pt tables,
+   8pt footnotes; code stays monospace and math is KaTeX. The engine (scripts/marp-engine.js) gives every
+   slide its type as a class, read from the Markdown:
+     title    # Title + a subtitle paragraph (the cover), or a last slide holding only a # line (the thanks page)
+     section  # Title alone: a photo page opening a block of slides
+     divider  # Name {.divider}: a plain white page with one centred line
+     (none)   ## Title  ### subtitle  > lead  then the body: a content slide
+   Classes for a whole content slide (<!-- _class: … -->): columns, prose, equation.
+   The cover photo URL placeholder is filled in by the engine. */
 
 :root {
   --ink: #000000; --ink-muted: #595959; --ink-faint: #9E9E9E; --ink-code: #2B3038; --surface-code: #F4F4F4;
   --amber: #9C6B1E; --link: #0000EE; --code-green: #188038; --code-blue: #1155CC; --code-orange: #B45F06;
   --alert: #FF0000; --alert-deep: #CC0000; --mark-orange: #F9CB9C; --mark-blue: #C9DAF8; --mark-yellow: #FFF2CC;
   --surface-head: #D9D9D9; --surface-head-blue: #D1E0F9; --band-blue: #CFE2F3; --band-orange: #FCE5CD;
-  --sans: Arial, 'Liberation Sans', 'Helvetica Neue', Helvetica, sans-serif;
   --serif: 'Times New Roman', 'Liberation Serif', Times, 'Noto Serif CJK TC', serif;
   --mono: 'Courier New', 'Liberation Mono', Courier, monospace;
   --hack: Hack, 'Fira Code', 'DejaVu Sans Mono', monospace;
-  --space-2: 9.6px; --inset-body: 7.2px; --space-3: 24px; --block-gap: 16px;
+
+  /* type: pt x 4/3 = px */
+  --title-size: 32px;      /* 24pt: slide title, title page, section page, divider */
+  --subtitle-size: 18.67px;/* 14pt: subtitle, lead, title-page subtitle, prose */
+  --body-size: 14.67px;    /* 11pt: body text, lists, run labels, slide number */
+  --table-size: 12px;      /* 9pt: every table */
+  --note-size: 10.67px;    /* 8pt: footnotes, code path labels */
+  --leading: 1.2;          /* single line spacing */
+
+  --space-2: 9.6px; --inset-body: 7.2px; --space-3: 24px; --block-gap: 14px;
 
   /* layout anchors, px on the 960 x 540 canvas */
-  --margin-x: 32px;                        /* left / right margin of lead, body and body rule */
-  --header-left: 38px; --header-width: 883px;
-  --title-top: 19px; --title-height: 43px;
-  --topic-top: 60px; --topic-height: 29px;
-  --rule-top: 96px;                        /* the 1pt rule under the header */
-  --body-top: 98px;                        /* lead, or the body when there is no lead */
-  --lead-bottom: 149px;                    /* the body under a lead starts here */
-  --body-bottom: 499px;                    /* nothing in the body goes below this */
-  --table-indent: 22px;                    /* table-left (0.56in) minus the margin */
+  --margin-x: 32px;                        /* left / right margin of the header, rule and body */
+  --header-inset: 4px;                     /* title and subtitle text from the margin */
+  --title-top: 22px; --title-height: 46px;
+  --subtitle-top: 68px; --subtitle-height: 30px;
+  --rule-top: 98px;                        /* the line under the subtitle */
+  --body-top: 106px;                       /* lead, or the body when there is no lead */
+  --lead-bottom: 150px;                    /* the body under a lead starts here at the earliest */
+  --body-bottom: 504px;                    /* nothing in the body goes below this */
   --column-width: 437px; --column-gap: 22px;
-  --run-label-height: 26px;
-  --footnote-width: 830px; --footnote-height: 37px;   /* the band below body-bottom, from the left edge */
-  --number-left: 894px; --number-top: 507px; --number-width: 85px; --number-height: 29px;
-  --cover-title-left: 33px; --cover-title-top: 177px; --cover-title-width: 895px; --cover-title-height: 186px;
-  --cover-sub-left: 35px; --cover-sub-top: 417px; --cover-sub-height: 96px;
+  --run-label-height: 22px;
+  --footnote-width: 860px;                 /* the band below body-bottom, from the left edge */
+  --number-left: 900px; --number-top: 508px; --number-width: 50px; --number-height: 28px;
+  --cover-title-top: 230px; --cover-title-height: 80px;      /* title page: centred */
+  --cover-sub-top: 420px; --cover-sub-height: 72px;
+  --section-title-left: 33px; --section-title-top: 177px; --section-title-width: 895px; --section-title-height: 186px;
   --divider-top: 247px; --divider-height: 46px;
 }
 
@@ -44,27 +54,31 @@ section {
   padding: var(--body-top) var(--margin-x) calc(540px - var(--body-bottom));
   display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch;
   background: #fff; color: var(--ink);
-  font-family: var(--serif); font-size: 16px; line-height: 1.2;   /* body 12pt, 100% leading */
+  font-family: var(--serif); font-size: var(--body-size); line-height: var(--leading);
 }
 section > * { margin: 0; flex: none; }
 
-/* ---------- header: category title, amber topic, 1pt rule ---------- */
+/* ---------- header: title, amber subtitle, the line under it ---------- */
+/* headings are placed without flexbox: a flex container would split text and inline math into separate
+   items and drop the space between them */
 section h2 {
-  position: absolute; left: var(--header-left); top: var(--title-top); width: var(--header-width); height: var(--title-height); margin: 0;
-  font: 400 29.33px/1.2 var(--sans); white-space: nowrap; overflow: hidden;
+  position: absolute; left: var(--margin-x); bottom: calc(540px - var(--title-top) - var(--title-height)); width: calc(960px - 2 * var(--margin-x));
+  margin: 0; padding-left: var(--header-inset); box-sizing: border-box;
+  font: 400 var(--title-size)/var(--leading) var(--serif); white-space: nowrap; overflow: hidden;
 }
 section h3 {
-  position: absolute; left: var(--header-left); top: var(--topic-top); width: var(--header-width); height: var(--topic-height); margin: 0;
-  font: 400 16.67px/1.2 var(--sans); color: var(--amber); white-space: nowrap; overflow: hidden;
+  position: absolute; left: var(--margin-x); top: calc(var(--subtitle-top) + var(--subtitle-height) / 2); transform: translateY(-50%); width: calc(960px - 2 * var(--margin-x));
+  margin: 0; padding-left: var(--header-inset); box-sizing: border-box;
+  font: 400 var(--subtitle-size)/var(--leading) var(--serif); color: var(--amber); white-space: nowrap; overflow: hidden;
 }
 section:has(> h2)::before {
-  content: ''; position: absolute; left: var(--header-left); top: var(--rule-top); width: var(--header-width); border-top: 1.33px solid var(--ink);
+  content: ''; position: absolute; left: var(--margin-x); top: var(--rule-top); width: calc(960px - 2 * var(--margin-x)); border-top: 1.33px solid var(--ink);
 }
 
-/* ---------- lead: the claim or question under the rule ---------- */
+/* ---------- lead: the claim or question under the line ---------- */
 section > blockquote {
-  margin: 0; padding: 0 var(--space-2); border: 0; min-height: calc(var(--lead-bottom) - var(--body-top));
-  font-size: 16px; quotes: none;
+  margin: 0; padding: 0 var(--space-2) 8px; border: 0; box-sizing: border-box; min-height: calc(var(--lead-bottom) - var(--body-top));
+  font-size: var(--subtitle-size); quotes: none;
 }
 section > blockquote > p { margin: 0; }
 section > blockquote::before, section > blockquote::after { content: none; }
@@ -77,10 +91,10 @@ section ul ul { padding-left: 24px; }
 section ul > li::before { content: '- '; }             /* typed dashes, not bullets */
 section ol { padding-left: calc(var(--inset-body) + 1.4em); }
 section ol ol { list-style: lower-alpha; }
-section.prose > p, section.prose > ul, section.prose > ol { font-size: 17.33px; }   /* prose 13pt */
+section.prose > p, section.prose > ul, section.prose > ol { font-size: var(--subtitle-size); }
 section strong { font-weight: bold; }
 section a { color: var(--link); text-decoration: underline; }
-section code { font: 10.67px var(--mono); color: var(--ink-code); background: var(--surface-code); padding: 0 2px; }
+section code { font: 0.8em var(--mono); color: var(--ink-code); background: var(--surface-code); padding: 0 2px; }
 section mark, .wip { background: var(--mark-yellow); color: var(--ink); }
 .callout { background: var(--mark-orange); }
 .callout::before { content: '⤷ '; }
@@ -88,14 +102,14 @@ section mark, .wip { background: var(--mark-yellow); color: var(--ink); }
 .faint { color: var(--ink-faint); }
 .token { background: var(--mark-blue); }
 
-/* stacked blocks after text get the 12pt gap */
+/* stacked blocks after text get a gap; text after text does not (paragraph spacing 0) */
 section > :is(p, ul, ol, blockquote) + :is(table, pre, .code, .figures, .math, img, div) { margin-top: var(--block-gap); }
 section > :is(table, pre, .code, .figures, .math, div) + :is(p, ul, ol, table, pre, .code, .math, div) { margin-top: var(--block-gap); }
 
 /* body rule: <hr class="rule"> (a Markdown --- is a slide break in Marp) */
 section hr.rule { border: 0; border-top: 1.33px solid var(--ink); margin: var(--block-gap) 0; }
 
-/* ---------- figures: a paragraph of images is one row that fills the rest of the body ---------- */
+/* ---------- figures: a paragraph of images is one centred row ---------- */
 /* a picture sits at 1:1 (width set by the engine), centred; it shrinks only when the row is too wide or
    the body too short, never grows. The row shrinks with the body, so max-height: 100% has a height to use */
 section > p.figures {
@@ -105,11 +119,11 @@ section > p.figures {
 section > p.figures > img { height: auto; min-width: 0; max-width: 100%; max-height: 100%; flex: 0 1 auto; object-fit: contain; object-position: center top; }
 section > p.figures .figure { display: flex; flex-direction: column; align-items: flex-start; min-width: 0; min-height: 0; max-height: 100%; flex: 0 1 auto; }
 section > p.figures .figure img { height: auto; min-width: 0; min-height: 0; max-width: 100%; max-height: calc(100% - var(--run-label-height)); object-fit: contain; object-position: left top; }
-.run-label { font-size: 15.33px; margin-left: calc(-1 * var(--space-2)); padding: 0 var(--space-2) 6px; }
+.run-label { font-size: var(--body-size); line-height: var(--run-label-height); }
 
 /* ---------- math (KaTeX): Computer Modern, left, 1.2x the body (1.5x on an equation slide) ---------- */
 /* KaTeX sets .katex at 1.21em: inline math comes down to the height of the text around it, display math
-   keeps the 1.21em, which is the system's 1.2x */
+   keeps the 1.21em */
 section .katex { font-size: 1.1em; }
 section .katex-display { margin: 0 0 0 var(--space-2) !important; text-align: left !important; font-size: 1em; }
 section .katex-display > .katex { font-size: 1.21em; text-align: left !important; }
@@ -117,23 +131,21 @@ section.equation .katex-display { font-size: 1.25em; }
 section p:has(> .katex-display) { padding: 0; margin: 6px 0 var(--block-gap); }
 img.algo, img.tex { display: block; margin-left: var(--space-2); }
 
-/* ---------- tables ---------- */
-section table { border-collapse: collapse; font-size: 12px; line-height: 1.1; margin: 0 auto; align-self: center; }   /* centred, compact */
+/* ---------- tables: 9pt, centred, compact ---------- */
+section table { border-collapse: collapse; font-size: var(--table-size); line-height: 1.1; margin: 0 auto; align-self: center; }
 section th, section td { border: 1px solid var(--ink); padding: 1px var(--space-2); text-align: center; vertical-align: middle; background: #fff; }
 section th { background: var(--surface-head); font-weight: bold; }
 section tr.ref td { background: var(--surface-head); }
 section tr.a td { background: var(--band-blue); }
 section tr.b td { background: var(--band-orange); }
-section table.settings { font-size: 10.67px; }
 section table.settings th { background: var(--surface-head-blue); text-align: left; }
 section table.settings td { text-align: left; }
 section table.settings td.c { text-align: center; }
-section table.dense { font-size: 10.67px; }
-section > table + p.table-notes, p.table-notes { font-size: 10.67px; color: var(--ink-muted); text-align: center; }
+p.table-notes { font-size: var(--note-size); color: var(--ink-muted); text-align: center; }
 
 /* ---------- code: monokai on a dark rounded box, line numbers, optional path label ---------- */
 .code { align-self: stretch; container-type: inline-size; }   /* spans the body (or column) so it can measure it */
-.code-path { font: 10.67px/1.2 var(--mono); color: var(--ink-muted); padding: 0 0 3px 2px; }
+.code-path { font: var(--note-size)/1.2 var(--mono); color: var(--ink-muted); padding: 0 0 3px 2px; }
 .code pre {
   width: max-content; max-width: 100%; box-sizing: border-box;
   margin: 0; padding: 14px 18px 14px 14px; border-radius: 5px; background: #272822;
@@ -163,43 +175,47 @@ pre.prompt .token { background: var(--mark-blue); }
 pre.prompt .sys { color: var(--code-blue); }
 pre.prompt .path { color: var(--code-green); }
 
-/* ---------- two columns: the body blocks after the lead flow into two 4.55in columns ---------- */
+/* ---------- two columns: the body blocks after the lead flow into two columns ---------- */
 section.columns { display: grid; grid-template-columns: var(--column-width) var(--column-width); column-gap: var(--column-gap); align-content: start; grid-auto-rows: min-content; }
 section.columns > blockquote { grid-column: 1 / -1; }   /* footnotes stay out of the grid: absolute, from the slide edge */
 section.columns > * + * { margin-top: 0; }
 
-/* ---------- footnotes (*1, *2 …) and the slide number ---------- */
-.fn-mark { font-weight: bold; text-decoration: underline; }
+/* ---------- footnotes [1], [2] … with superscript citations, and the slide number ---------- */
+sup.fn-ref { font-size: 0.7em; line-height: 0; vertical-align: super; }
+sup.fn-ref a { color: var(--link); text-decoration: none; }
 section > .footnotes {
-  position: absolute; left: 0; bottom: 0; min-height: var(--footnote-height); max-width: var(--footnote-width); box-sizing: border-box;
+  position: absolute; left: 0; bottom: 0; min-height: calc(540px - var(--body-bottom)); max-width: var(--footnote-width); box-sizing: border-box;
   margin: 0; padding: 4px var(--space-2); display: flex; flex-direction: column; justify-content: center;
-  font-size: 10.67px; line-height: 1.2;
+  font-size: var(--note-size); line-height: var(--leading);
 }
 section[data-marpit-pagination]::after {
   content: attr(data-marpit-pagination);
   position: absolute; left: var(--number-left); top: var(--number-top); right: auto; bottom: auto; width: var(--number-width); height: var(--number-height);
   display: flex; align-items: center; justify-content: center; padding: 0;
-  font: 16px var(--serif); color: var(--ink);
+  font: var(--body-size) var(--serif); color: var(--ink);
 }
 
-/* ---------- cover and photo section slides ---------- */
-section:has(> h1) {
+/* ---------- photo pages: title page (cover, thanks) and section page ---------- */
+section.title, section.section {
   background-image: linear-gradient(rgba(255,255,255,0.78), rgba(255,255,255,0.78)), url('__COVER_URL__');
   background-size: cover; background-position: center;
 }
-section h1 {
-  position: absolute; left: var(--cover-title-left); top: var(--cover-title-top); width: var(--cover-title-width); height: var(--cover-title-height); margin: 0;
-  display: flex; align-items: center; font: 700 34.67px/1.2 var(--sans);
+section h1 { margin: 0; font: 700 var(--title-size)/var(--leading) var(--serif); }
+section.title h1 {
+  position: absolute; left: 0; top: calc(var(--cover-title-top) + var(--cover-title-height) / 2); transform: translateY(-50%); width: 960px;
+  padding: 0 var(--margin-x); box-sizing: border-box; text-align: center;
 }
-section:has(> h1) > p {
-  position: absolute; left: var(--cover-sub-left); top: var(--cover-sub-top); width: var(--cover-title-width); height: var(--cover-sub-height); margin: 0; padding: 0;
-  display: flex; flex-direction: column; justify-content: center; font: 700 18.67px/1.2 var(--sans); color: var(--ink-muted);
+section.title > p {
+  position: absolute; left: 0; top: var(--cover-sub-top); width: 960px; height: var(--cover-sub-height); margin: 0; padding: 0;
+  display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center;
+  font: 700 var(--subtitle-size)/var(--leading) var(--serif); color: var(--ink-muted);
 }
-section[data-marpit-pagination]:has(> h1):has(> p)::after { display: none; }   /* no number on the cover */
+section.section h1 {
+  position: absolute; left: var(--section-title-left); top: calc(var(--section-title-top) + var(--section-title-height) / 2); transform: translateY(-50%); width: var(--section-title-width);
+}
 
 /* ---------- plain divider ---------- */
-section:has(> h1.divider) { background-image: none; background: #fff; }
-section h1.divider {
-  left: var(--margin-x); top: var(--divider-top); width: calc(960px - 2 * var(--margin-x)); height: var(--divider-height); justify-content: center;
-  font: 400 29.33px/1.2 var(--sans);
+section.divider h1 {
+  position: absolute; left: var(--margin-x); top: calc(var(--divider-top) + var(--divider-height) / 2); transform: translateY(-50%); width: calc(960px - 2 * var(--margin-x));
+  text-align: center; font-weight: 400;
 }
