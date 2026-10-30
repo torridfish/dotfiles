@@ -7,7 +7,7 @@ description: Write the user's research slides (weekly Progress Report, lab meeti
 
 The decks are plain Markdown rendered by **md2s** (the user's tool, `~/Code/md2s`, on the PATH as `md2s`). md2s owns the syntax and the look: its default theme is this house style. This skill owns how the user's decks are written: structure, wording, notation and pictures.
 
-**Before writing, run `md2s --skill` and read it.** It lists the CLI, the front matter, every slide type, layout, callout, table, code, diagram and media feature with its syntax. If `md2s` is missing, run `npm ci && npm link` in `~/Code/md2s`, then `md2s setup`, which installs what it lacks (a browser, TeX, the CJK font) without sudo after asking; `md2s --check` reports the tools (Chrome, TeX, ffmpeg …). The draw.io desktop app is this skill's own need (`scripts/drawio-export.sh`), not md2s's.
+**Before writing, run `md2s --skill` and read it.** It lists the CLI, the front matter, every slide type, layout, callout, table, code, diagram and media feature with its syntax. If `md2s` is missing, run `npm install -g @torridfish/md2s`, then `md2s setup`, which installs what it lacks (a browser, TeX, the CJK font) without sudo after asking; `md2s --check` reports the tools (Chrome, TeX, ffmpeg …). The draw.io desktop app is this skill's own need (`scripts/drawio-export.sh`), not md2s's.
 
 ```bash
 md2s 2026-11-05/deck.md --pdf --pptx     # deck.pdf + deck.pptx next to deck.md
