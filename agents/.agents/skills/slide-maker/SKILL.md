@@ -7,7 +7,7 @@ description: Write the user's research slides (weekly Progress Report, lab meeti
 
 The decks are plain Markdown rendered by **md2s** (the user's tool, `~/Code/md2s`, on the PATH as `md2s`). md2s owns the syntax and the look: its default theme is this house style. This skill owns how the user's decks are written: structure, wording, notation and pictures.
 
-**Before writing, run `md2s --skill` and read it.** It lists the CLI, the front matter, every slide type, layout, callout, table, code, diagram and media feature with its syntax. If `md2s` is missing, run `npm install && npm link` in `~/Code/md2s`; `md2s --check` reports the optional tools (TeX, ffmpeg, draw.io).
+**Before writing, run `md2s --skill` and read it.** It lists the CLI, the front matter, every slide type, layout, callout, table, code, diagram and media feature with its syntax. If `md2s` is missing, run `npm ci && npm link` in `~/Code/md2s`, then `md2s setup`, which installs what it lacks (a browser, TeX, the CJK font) without sudo after asking; `md2s --check` reports the tools (Chrome, TeX, ffmpeg …). The draw.io desktop app is this skill's own need (`scripts/drawio-export.sh`), not md2s's.
 
 ```bash
 md2s 2026-11-05/deck.md --pdf --pptx     # deck.pdf + deck.pptx next to deck.md
@@ -27,7 +27,7 @@ Use what md2s offers. When a slide needs a layout or a mark it does not have, sa
 - A weekly deck runs title page → (section page → content slides)* → TODO, twelve to twenty-five content slides, one message per slide. Add a closing thanks page at build time with `md2s --thanks` when the talk wants one; it is not written in the Markdown. A slide that cannot be named by a title and a subtitle is two slides.
 - Headings have three jobs. `#` alone is a section page: a chapter of the talk, usually the question its slides answer. `##` is the slide's category, a label from the list below that repeats from slide to slide. `###` is the slide's title, its one message. The contents slide lists sections with their slides' `###`; the categories in `toc-standalone` (TODO, Appendix, References, set in `config.yaml` here) stand apart at the end, so a closing TODO slide needs no section of its own.
 - Slides that share a title write the `##` once and start each slide with its `###`; a subsection that runs over continues after a `---`, which repeats the `##` and `###` and numbers the parts (1/2), (2/2). Set `toc: true` for a contents slide after the title page.
-- The category (`##`) is a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period.
+- The category (`##`) is a noun phrase in Title Case: Experiment, Benchmark, Setup, Analysis, Research, Review, Related Work, Known Issue, Current Problem, Next Step, TODO, Appendix, or a project name on a reading page. The subtitle (`###`) says what this slide is about, in sentence case. Neither ends with a period. Keep each to one line: a second line fits, but moves the line and the body down and takes that height from the body; a third draws a warning.
 - The lead (`>`) states the claim or the question in one or two sentences; bold the one term the slide turns on.
 - Name runs by their ID and use it as a noun: 2-92, 4-00, 4-03. A run ID above a figure is the image title (`![](f.png "4-03")`); one called out in text is `[4-03]{.callout}`. Tables of runs use the `role` column (`ref`, `a`, `b`) to tint the reference and the two groups.
 - Papers are cited, not footnoted: keep a `refs.bib` beside the deck (exported from the user's reference manager, or written for the papers the deck needs), set `bibliography: refs.bib`, and write `[@key]`; md2s adds the References slides. Footnotes carry caveats and the other links, with the URL written out (GitHub issues, source lines, run logs). A paper's reading page quotes it in your own words in two to five lines, shows one to three of its figures, and cites it.
@@ -43,7 +43,9 @@ Use what md2s offers. When a slide needs a layout or a mark it does not have, sa
 
 ## Check and hand back
 
-Render, then read every PDF page as the audience would: Marp does not warn when a body is too tall, so an overflow, a clipped table or a figure that shrank too far is only visible there. Fix the Markdown (split the slide with `---`, move a block, pick a `_layout`) before reaching for `<style scoped>`.
+Render, then deal with every `md2s: …` line the build prints. After each build md2s lays the deck out again and warns, by slide, about content the PDF loses or crowds: a body that runs into the footnotes or off the bottom, anything past the margins, a heading on a third line. Each warning is content cut off or covered in the PDF, so a deck is not done while one remains; never hand one back built with `--no-check`. Fix the Markdown (split the slide with `---`, shorten, move a block, pick a `_layout`) before reaching for `<style scoped>`.
+
+Then read every PDF page as the audience would: the check measures, it does not judge, so a figure that shrank too far, a crowded slide or a wrapped table cell is only visible there.
 
 Hand back the Markdown, the PDF and the PPTX, with figure sources beside their exports, in one folder named by the deck date (`2026-11-05/`). Say which slides are placeholders for content the user still owes.
 
