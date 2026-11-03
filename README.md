@@ -25,6 +25,7 @@ dotfiles/
 ├── ssh/          → ~/.ssh/config (untracked, in .gitignore — real hosts/IPs kept local)
 ├── starship/     → ~/.config/starship.toml
 ├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
+├── t3code/       → ~/.t3/userdata/keybindings.json
 ├── tmux/         → ~/.config/tmux/tmux.conf
 ├── vim/          → ~/.config/vim/vimrc
 ├── yazi/         → ~/.config/yazi/{yazi.toml,keymap.toml,package.toml,init.lua,plugins/}
@@ -94,6 +95,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `systemd-user` | Custom user units: deskflow-left-edge, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
 | `autostart` | XDG autostart desktop entries (deskflow, fcitx5, oxwu, syncthing) |
 | `starship` | Cross-shell prompt |
+| `t3code` | T3 Code keybindings: `Ctrl+D` and `Ctrl+B` are left to the shell inside terminals (split is `Ctrl+\`, sidebar is `Ctrl+Shift+B`). T3 Code writes through the symlink, so changes made in the app show up here; restart the app after editing the repo copy directly. The rest of `~/.t3/` (settings, state databases, logs) stays machine-local |
 | `tmux` | Terminal multiplexer config (TPM plugins auto-bootstrap on first run) |
 | `vim` | Vim 9.1+ with XDG-native vimrc |
 | `zsh` | Zsh env, Oh-My-Zsh, per-tool PATH setup |
