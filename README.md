@@ -8,7 +8,7 @@ Each top-level directory is a **stow package** that mirrors the target structure
 
 ```
 dotfiles/
-├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); slide-maker is also linked into ~/.claude/skills and ~/.codex/skills
+├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); slide-maker is also linked into ~/.claude/skills and ~/.codex/skills; design-grind & before-after-review are adapted from sago-cream/skills
 ├── autostart/    → ~/.config/autostart/*.desktop
 ├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
 ├── btop/         → ~/.config/btop/btop.conf
@@ -76,7 +76,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 
 | Package | Contents |
 |---|---|
-| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, slide-maker (Markdown → PDF / PPTX slides with Marp, plus LaTeX pseudocode and draw.io figure pipelines; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`) |
+| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, slide-maker (Markdown → PDF / PPTX slides with Marp, plus LaTeX pseudocode and draw.io figure pipelines; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`), design-grind + before-after-review (iterative UI design review loop: scored reviews per state until a target, then a before/after decision board — adapted from [sago-cream/skills](https://github.com/sago-cream/skills), installed as siblings so design-grind's `../before-after-review/SKILL.md` reference resolves) |
 | `bash` | bashrc / profile / bash_logout |
 | `btop` | System monitor config (btop 1.4+) |
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
