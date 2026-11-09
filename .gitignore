@@ -9,3 +9,6 @@ zsh/secrets.zsh
 *.zwc
 *.log
 node_modules/
+
+# claude-hud writes its runtime data into the linked directory
+claude/.claude/plugins/claude-hud/transcript-cursors/
