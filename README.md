@@ -60,6 +60,7 @@ stow -t ~ -D --no-folding git
 
 - `TOOLS`: what to install, how to detect it, which profile selects it.
 - `STOW_META`: a description and default profiles for each stow package, and what the package expects (a tool, or a program that needs root).
+- `DIR_LINKS`: directories that are linked as a whole instead of file by file. Today this is `~/.claude/plugins/claude-hud`: claude-hud opens `config.json` with `O_NOFOLLOW`, so the file must not be a symlink. The package's `.stow-local-ignore` keeps the directory out of stow, and `setup.sh` links it. claude-hud writes `transcript-cursors/` into it, and `.gitignore` covers that.
 
 A new top-level directory with tracked files appears in the stow menu without any edit, off by default. Add a line to `STOW_META` to give it a description and defaults. The list of packages in this README is not kept by hand; use `./setup.sh --list`.
 
@@ -87,6 +88,16 @@ Notes for packages that need more than their description in `setup/manifest.sh`:
 - The same file still sets `/usr/bin/gh` as the https credential helper. With `gh` from pixi, the binary is `~/.pixi/bin/gh`, so fetch of a private repo over https cannot find the helper. Use an SSH URL for private repos on servers.
 - Your login shell on an HPC host is usually bash and cannot be changed without root. Add `exec zsh` to `~/.bashrc` (guarded by `[[ $- == *i* ]]`) to start zsh from bash.
 - pixi caches packages in `~/.cache/rattler`. On a host with a small home quota, set `PIXI_CACHE_DIR` to a larger disk before you run the script.
+
+## Troubleshooting
+
+**`links into this repo and holds absolute symlinks`**: a directory in `$HOME` (for example `~/.codex`) is a symlink into this repo, and an app has written runtime files into the repo through it. Stow refuses a package that contains absolute symlinks. The message prints the fix: replace the link with a real directory that keeps the data, then restore the tracked files.
+
+```bash
+rm ~/.codex && mv ~/dotfiles/agents/.codex ~/.codex && git -C ~/dotfiles checkout -- agents/.codex
+```
+
+Stop the app first if it is running and you want to avoid it holding old paths. Do not run `pkill` on a shared host, because it also matches other users' processes.
 
 ## Sensitive and machine-specific files
 
