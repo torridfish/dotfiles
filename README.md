@@ -8,7 +8,7 @@ Each top-level directory is a **stow package** that mirrors the target structure
 
 ```
 dotfiles/
-├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); slide-maker is also linked into ~/.claude/skills and ~/.codex/skills; design-grind & before-after-review are adapted from sago-cream/skills
+├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); all of them are also linked into ~/.claude/skills (slide-maker into ~/.codex/skills too); design-grind & before-after-review are adapted from sago-cream/skills
 ├── autostart/    → ~/.config/autostart/*.desktop
 ├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
 ├── btop/         → ~/.config/btop/btop.conf
