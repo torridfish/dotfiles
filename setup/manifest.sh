@@ -115,7 +115,7 @@ install_ohmyzsh() {
 install_tpm() {
     local dir="$HOME/.tmux/plugins/tpm"
     clone https://github.com/tmux-plugins/tpm "$dir" || return 1
-    run "$dir/bin/install_plugins.sh" || warn "TPM plugin install failed; press prefix + I inside tmux"
+    run "$dir/bin/install_plugins" || warn "TPM plugin install failed; press prefix + I inside tmux"
     return 0
 }
 
