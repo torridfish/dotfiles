@@ -17,6 +17,9 @@
     graph = !git log --graph --oneline --decorate --all
 [pull]
     rebase = true
+[url "git@github.com:"]
+    # Push over SSH; clone and fetch of public repos stay on https and need no key.
+    pushInsteadOf = https://github.com/
 [credential "https://github.com"]
 	helper = 
 	helper = !/usr/bin/gh auth git-credential
