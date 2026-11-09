@@ -12,7 +12,7 @@ headingDivider: 2
 toc: true
 ---
 
-<!-- Progress Report 2026-11-05 — what this week covers.
+<!-- Progress Report 2026-11-05: what this week covers.
      Source: issue / gist links.  Build: md2s 2026-11-05.md --pdf --pptx -->
 
 # Progress Report

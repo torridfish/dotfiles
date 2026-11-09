@@ -1,6 +1,6 @@
 ---
 name: slide-maker
-description: Write the user's research slides (weekly Progress Report, lab meeting sections, paper reading pages, talks) as one Markdown file and render them with md2s to PDF, PPTX or a presentable HTML deck, in the user's house style; also make the pictures that go on them — pseudocode from LaTeX and architecture diagrams from draw.io sources. Use this skill whenever the user asks for slides, a deck, a progress report, a 週報 / 投影片 / 簡報, a section for a shared lab deck, or to rebuild, restyle or re-export existing slides, even if they do not name the tool.
+description: Write the user's research slides (weekly Progress Report, lab meeting sections, paper reading pages, talks) as one Markdown file and render them with md2s to PDF, PPTX or a presentable HTML deck, in the user's house style; also make the pictures that go on them: pseudocode from LaTeX and architecture diagrams from draw.io sources. Use this skill whenever the user asks for slides, a deck, a progress report, a 週報 / 投影片 / 簡報, a section for a shared lab deck, or to rebuild, restyle or re-export existing slides, even if they do not name the tool.
 ---
 
 # slide-maker
@@ -51,10 +51,10 @@ Hand back the Markdown, the PDF and the PPTX, with figure sources beside their e
 
 ## Files in this skill
 
-- `references/style.md` — front matter, the weekly-deck skeleton, and the layouts these decks use most
-- `references/diagrams.md`, `assets/diagram-kit.drawio` / `.png` — the draw.io kit: vocabulary, colours, one styled instance of every element
-- `macros.tex` — the research notation for KaTeX and LaTeX fences (linked to `~/.config/md2s/macros.tex`)
-- `config.yaml` — the user's md2s defaults, such as `toc-standalone` (linked to `~/.config/md2s/config.yaml`); a deck's front matter overrides them
-- `scripts/drawio-export.sh` — draw.io → SVG (and PNG with `--png`) with the desktop app, headless
+- `references/style.md`: front matter, the weekly-deck skeleton, and the layouts these decks use most
+- `references/diagrams.md`, `assets/diagram-kit.drawio` / `.png`: the draw.io kit: vocabulary, colours, one styled instance of every element
+- `macros.tex`: the research notation for KaTeX and LaTeX fences (linked to `~/.config/md2s/macros.tex`)
+- `config.yaml`: the user's md2s defaults, such as `toc-standalone` (linked to `~/.config/md2s/config.yaml`); a deck's front matter overrides them
+- `scripts/drawio-export.sh`: draw.io → SVG (and PNG with `--png`) with the desktop app, headless
 
 The skill lives in the user's dotfiles (`agents/.agents/skills/slide-maker`) and is linked into `~/.agents/skills`, `~/.claude/skills` and `~/.codex/skills`; md2s is a separate repo at `~/Code/md2s`.
