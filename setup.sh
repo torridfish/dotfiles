@@ -285,8 +285,33 @@ stow_pkg() {
     fi
     check_folded "$pkg" || return 1
     backup_conflicts "$pkg"
-    run stow -d "$SCRIPT_DIR" -t "$HOME" --restow --no-folding "$pkg" || return 1
+    stow_apply "$pkg" || return 1
     link_dirs "$pkg"
+}
+
+# Run stow. backup_conflicts cannot predict every case stow rejects (for example
+# a copy of a tracked symlink that resolves into the repo but is not a stow
+# link). When stow names such targets, back them up and retry once.
+stow_apply() {
+    local pkg=$1 out rc paths p
+    local -a cmd=(stow -d "$SCRIPT_DIR" -t "$HOME" --restow --no-folding "$pkg")
+    if $DRY_RUN; then run "${cmd[@]}"; return; fi
+    out=$("${cmd[@]}" 2>&1); rc=$?
+    if (( rc != 0 )) && ! grep -q 'absolute symlink' <<<"$out"; then
+        paths=$(sed -n -e 's/^  \* existing target is not owned by stow: //p' \
+                       -e 's/^  \* existing target is neither a link nor a directory: //p' <<<"$out")
+        if [[ -n $paths ]]; then
+            while IFS= read -r p; do
+                [[ -e $HOME/$p || -L $HOME/$p ]] || continue
+                warn "Backing up ~/$p -> $BACKUP_ROOT/$p (stow does not own it)"
+                mkdir -p "$BACKUP_ROOT/$(dirname "$p")"
+                mv "$HOME/$p" "$BACKUP_ROOT/$p"
+            done <<<"$paths"
+            out=$("${cmd[@]}" 2>&1); rc=$?
+        fi
+    fi
+    [[ -n $out ]] && printf '%s\n' "$out" >&2
+    return "$rc"
 }
 
 # -----------------------------------------------------------------------------
