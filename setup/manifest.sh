@@ -57,7 +57,7 @@ STOW_META=(
 "agent|ls||Shared global AGENTS.md (~/.agent)"
 "agents|ls||Cross-agent skills (~/.agents plus links into ~/.claude and ~/.codex)"
 "autostart|l|sys:fcitx5 sys:deskflow sys:syncthing|XDG autostart entries"
-"bash|ls||bashrc and profile"
+"bash|l||bashrc and profile (off on servers)"
 "btop|ls|btop|btop config"
 "cava|l|sys:cava|cava config"
 "claude|ls||Claude Code settings and statusline"

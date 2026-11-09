@@ -84,6 +84,7 @@ Notes for packages that need more than their description in `setup/manifest.sh`:
 
 ## Server notes
 
+- The `bash` package is off by default on the `server` profile. A cluster's `~/.bashrc` usually sets modules, XDG paths and site functions, and `setup.sh` would move it to the backup directory. Select `bash` by hand only after you have copied what you need into a `*.local` file.
 - `git/.config/git/config` rewrites pushes to `https://github.com/...` into `git@github.com:...` (`pushInsteadOf`). A new machine needs a GitHub SSH key before it can push. Clone and fetch of public repos stay on https and need no key.
 - The same file still sets `/usr/bin/gh` as the https credential helper. With `gh` from pixi, the binary is `~/.pixi/bin/gh`, so fetch of a private repo over https cannot find the helper. Use an SSH URL for private repos on servers.
 - Your login shell on an HPC host is usually bash and cannot be changed without root. Add `exec zsh` to `~/.bashrc` (guarded by `[[ $- == *i* ]]`) to start zsh from bash.
