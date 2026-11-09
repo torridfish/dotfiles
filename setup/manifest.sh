@@ -112,10 +112,28 @@ install_ohmyzsh() {
 }
 
 # tmux.conf loads ~/.tmux/plugins/tpm/tpm, so TPM must live there.
+# TPM's install script reads TMUX_PLUGIN_MANAGER_PATH from a running tmux server
+# that has loaded tmux.conf. A private server (own TMUX_TMPDIR) provides that
+# without touching the user's own tmux sessions.
 install_tpm() {
     local dir="$HOME/.tmux/plugins/tpm"
+    local conf="$HOME/.config/tmux/tmux.conf"
     clone https://github.com/tmux-plugins/tpm "$dir" || return 1
-    run "$dir/bin/install_plugins" || warn "TPM plugin install failed; press prefix + I inside tmux"
+    if ${DRY_RUN:-false}; then
+        printf '  + (private tmux server) %s\n' "$dir/bin/install_plugins"
+        return 0
+    fi
+    if ! have tmux || [[ ! -f $conf ]]; then
+        warn "Skipping TPM plugins (tmux or $conf missing); press prefix + I inside tmux later"
+        return 0
+    fi
+    local tmp rc=0
+    tmp=$(mktemp -d)
+    env -u TMUX TMUX_TMPDIR="$tmp" tmux -f "$conf" new-session -d -s tpm-setup \
+        && env -u TMUX TMUX_TMPDIR="$tmp" "$dir/bin/install_plugins" || rc=$?
+    env -u TMUX TMUX_TMPDIR="$tmp" tmux kill-server 2>/dev/null
+    rm -rf "$tmp"
+    (( rc == 0 )) || warn "TPM plugin install failed; press prefix + I inside tmux"
     return 0
 }
 
