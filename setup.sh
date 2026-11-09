@@ -200,6 +200,7 @@ BACKUP_ROOT="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
 backup_conflicts() {
     local pkg=$1 rel target
     while IFS= read -r rel; do
+        is_dir_link_path "$pkg" "$rel" && continue   # handled by link_dirs
         target="$HOME/$rel"
         [[ -e $target || -L $target ]] || continue
         # Resolve fully: the last component may be a real file reached through
@@ -213,16 +214,79 @@ backup_conflicts() {
     done < <(cd "$SCRIPT_DIR/$pkg" && find . \( -type f -o -type l \) | sed 's|^\./||')
 }
 
+# True if REL (a path inside PKG) is, or is under, a DIR_LINKS entry of PKG.
+is_dir_link_path() {
+    local pkg=$1 rel=$2 entry dir
+    for entry in "${DIR_LINKS[@]}"; do
+        [[ ${entry%%:*} == "$pkg" ]] || continue
+        dir=${entry#*:}
+        [[ $rel == "$dir" || $rel == "$dir"/* ]] && return 0
+    done
+    return 1
+}
+
+# Link (or unlink) the DIR_LINKS directories of one package.
+link_dirs() {
+    local pkg=$1 entry rel src target
+    for entry in "${DIR_LINKS[@]}"; do
+        [[ ${entry%%:*} == "$pkg" ]] || continue
+        rel=${entry#*:}
+        src="$SCRIPT_DIR/$pkg/$rel"
+        target="$HOME/$rel"
+        if $UNSTOW; then
+            [[ -L $target && "$(readlink -f "$target")" == "$src" ]] && run rm "$target"
+            continue
+        fi
+        [[ -L $target && "$(readlink -f "$target")" == "$src" ]] && continue   # already linked
+        if [[ -e $target || -L $target ]]; then
+            warn "Backing up ~/$rel -> $BACKUP_ROOT/$rel"
+            if ! $DRY_RUN; then
+                mkdir -p "$BACKUP_ROOT/$(dirname "$rel")"
+                mv "$target" "$BACKUP_ROOT/$rel"
+            fi
+        fi
+        run mkdir -p "$(dirname "$target")"
+        run ln -s "$src" "$target"
+    done
+}
+
+# A directory in $HOME that links into this repo ("folded") lets an app write
+# runtime files into the repo. If one of those files is an absolute symlink,
+# stow refuses the whole package ("source is an absolute symlink"). Detect that
+# before stowing and print the fix. A folded link without absolute symlinks is
+# fine: stow unfolds it by itself.
+check_folded() {
+    local pkg=$1 rel target found bad=0
+    while IFS= read -r rel; do
+        is_dir_link_path "$pkg" "$rel" && continue
+        target="$HOME/$rel"
+        [[ -L $target ]] || continue
+        [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]] || continue
+        found=$(find "$SCRIPT_DIR/$pkg/$rel" -type l -lname '/*' 2>/dev/null | head -n 3)
+        [[ -n $found ]] || continue
+        error "~/$rel links into this repo and holds absolute symlinks (runtime data that an app wrote through the link):"
+        printf '      %s\n' $found >&2
+        printf '    Make it a real directory first, then run setup.sh again:\n' >&2
+        printf '      rm ~/%s && mv %s/%s/%s ~/%s && git -C %s checkout -- %s/%s\n' \
+            "$rel" "$SCRIPT_DIR" "$pkg" "$rel" "$rel" "$SCRIPT_DIR" "$pkg" "$rel" >&2
+        bad=1
+    done < <(cd "$SCRIPT_DIR/$pkg" && find . -mindepth 1 -type d | sed 's|^\./||')
+    return "$bad"
+}
+
 # --no-folding keeps directories that apps write into (Deskflow tls/, new
 # autostart entries, ...) as real directories; only tracked files become links.
 stow_pkg() {
     local pkg=$1
     if $UNSTOW; then
-        run stow -d "$SCRIPT_DIR" -t "$HOME" -D --no-folding "$pkg"
-        return
+        run stow -d "$SCRIPT_DIR" -t "$HOME" -D --no-folding "$pkg" || return 1
+        link_dirs "$pkg"
+        return 0
     fi
+    check_folded "$pkg" || return 1
     backup_conflicts "$pkg"
-    run stow -d "$SCRIPT_DIR" -t "$HOME" --restow --no-folding "$pkg"
+    run stow -d "$SCRIPT_DIR" -t "$HOME" --restow --no-folding "$pkg" || return 1
+    link_dirs "$pkg"
 }
 
 # -----------------------------------------------------------------------------

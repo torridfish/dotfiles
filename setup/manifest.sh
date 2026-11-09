@@ -85,6 +85,18 @@ STOW_META=(
 # Top-level directories that are never stow packages.
 STOW_EXCLUDE=(setup node_modules)
 
+# -----------------------------------------------------------------------------
+# DIR_LINKS: directories that are linked as a whole instead of file by file.
+#   package:path-under-HOME
+#
+# Each path must also be excluded from stow in the package's .stow-local-ignore.
+# claude-hud opens config.json with O_NOFOLLOW, so the file itself must not be
+# a symlink; a symlinked parent directory is fine.
+# -----------------------------------------------------------------------------
+DIR_LINKS=(
+"claude:.claude/plugins/claude-hud"
+)
+
 # =============================================================================
 # Installer functions (used by `fn` and `post` methods above).
 # They rely on helpers from setup/lib.sh: run, clone, fetch, info, warn.
