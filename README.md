@@ -1,123 +1,119 @@
 # Dotfiles
 
-Dotfiles managed by [GNU Stow](https://www.gnu.org/software/stow/) and versioned with git. All configs live under `~/.config/` following the [XDG Base Directory](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) convention.
+Dotfiles managed by [GNU Stow](https://www.gnu.org/software/stow/) and versioned with git. Configs follow the [XDG Base Directory](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html) convention where the program allows it.
 
-## Structure
+Each top-level directory is a stow package that mirrors the target path under `$HOME`. For example, `git/.config/git/config` links to `~/.config/git/config`.
 
-Each top-level directory is a **stow package** that mirrors the target structure under `$HOME`:
+Linux only. The same repo serves two kinds of machine:
 
-```
-dotfiles/
-├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); all of them are also linked into ~/.claude/skills (slide-maker into ~/.codex/skills too); design-grind & before-after-review are adapted from sago-cream/skills
-├── autostart/    → ~/.config/autostart/*.desktop
-├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
-├── btop/         → ~/.config/btop/btop.conf
-├── cava/         → ~/.config/cava/config
-├── claude/       → ~/.claude/settings.json
-├── condarc/      → ~/.condarc
-├── deskflow/     → ~/.config/Deskflow/{Deskflow.conf,deskflow-server.conf}
-├── fcitx5/       → ~/.config/fcitx5/{config,profile,conf/*.conf}
-├── gemini/       → ~/.gemini/GEMINI.md (symlink to agent/.agent/AGENTS.md, for agy)
-├── gh/           → ~/.config/gh/config.yml
-├── git/          → ~/.config/git/{config,commit-template,ignore}
-├── kitty/        → ~/.config/kitty/{kitty.conf,ssh.conf,current-theme.conf}
-├── pi/           → ~/.pi/agent/{settings.json,models.json,mcp.json,subagents-herdr.json,prompts,extensions}
-├── ssh/          → ~/.ssh/config (untracked, in .gitignore — real hosts/IPs kept local)
-├── starship/     → ~/.config/starship.toml
-├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
-├── t3code/       → ~/.t3/userdata/keybindings.json
-├── tmux/         → ~/.config/tmux/tmux.conf
-├── vim/          → ~/.config/vim/vimrc
-├── yazi/         → ~/.config/yazi/{yazi.toml,keymap.toml,package.toml,init.lua,plugins/}
-├── zed/          → ~/.config/zed/{settings.json,keymap.json}
-├── zsh/          → ~/.zshenv, ~/.zshrc
-└── setup.sh      → one-shot installer (installs stow, symlinks everything)
-```
+| Profile | Machine | Default selection |
+|---|---|---|
+| `local` | Workstation with a desktop | All tools and all packages, including desktop apps |
+| `server` | HPC or remote host, usually without sudo | CLI tools and CLI configs only |
 
-Intentionally **not** tracked: GNOME desktop settings (dconf database, binary — dump/load with `dconf`), `~/.claude.json` (mostly project state).
-
-**Note on granularity:** directories containing runtime artifacts (e.g. `gh/hosts.yml` with login tokens, **`ssh/.ssh/config` with real hostnames/IPs**, `tmux/plugins/`, `btop/themes/`, fcitx5 caches) are **not** symlinked as a whole — only the actual config files are, so junk and secrets never end up in this repo.
-
-## Quick start (new machine)
+## Quick start
 
 ```bash
 git clone git@github.com:torridfish/dotfiles.git ~/Code/dotfiles
 cd ~/Code/dotfiles
-./setup.sh -y
+./setup.sh
 ```
 
-The script will install stow if missing, back up any conflicting real files to `~/.dotfiles-backup/`, and symlink every package into `$HOME`.
+The script is interactive. It asks for a profile, then shows two checklists: tools to install and stow packages to link. Items that fit the profile start selected, and tools that are already installed start unselected. After a summary you confirm once, and then it runs.
 
-## macOS
+If [gum](https://github.com/charmbracelet/gum) is missing, the script offers to download it to `~/.local/bin` for nicer menus. Press `x` to toggle an item in gum. Without gum, the menus are plain bash: type item numbers to toggle them.
 
-Linux-only packages (`autostart`, `deskflow`, `fcitx5`, `systemd-user`) are skipped automatically:
+Nothing in `setup.sh` needs sudo:
+
+- Tools install with [pixi](https://pixi.sh) (`pixi global install`, into `~/.pixi/bin`). The script installs pixi itself if it is missing.
+- Oh My Zsh, its two plugins, TPM and nvm are plain `git clone` into `$HOME`. rustup uses its official installer with `--no-modify-path`.
+- Stow links files into `$HOME`. If stow is missing, it is installed with pixi.
+- Programs that need a system package manager (kitty, fcitx5, deskflow, zed, cava, syncthing) are not installed. The script prints which ones are missing for the packages you selected.
+
+Before it links a file, the script moves any conflicting real file to `~/.dotfiles-backup/<timestamp>/`.
+
+## Non-interactive use
 
 ```bash
-brew bundle --file=~/Code/dotfiles/Brewfile   # tools first (kitty/zed via cask)
-./setup.sh -y
+./setup.sh -y --profile server              # profile defaults, no prompts
+./setup.sh -y --tools none --stow git,zsh   # link two packages only
+./setup.sh --tools tmux,tpm --stow tmux     # install and link, no menus
+./setup.sh --unstow --stow zsh              # remove the links of one package
+./setup.sh --dry-run                        # print every command, change nothing
+./setup.sh --list                           # show tools and packages
 ```
 
-CLI agents (pi, claude, ...) install via their own channels. macOS's built-in zsh (5.9) is used as-is — no `brew zsh` or `chsh` needed. Per-machine overrides: tools that support `include` (git, kitty) can source a gitignored `*.local` file on one machine only.
+`--tools` and `--stow` accept a comma-separated list, `all` or `none`. A category that you do not give uses the profile default. Any of these flags turns the menus off. Run `./setup.sh --help` for all flags.
 
-## Manual stow usage
-
-From the repo root:
+To use one package without the script:
 
 ```bash
-stow -t ~ --restow git        # link / re-link one package
-stow -t ~ -D git              # unlink one package
-stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
-./setup.sh --unstow           # unlink all packages
+stow -t ~ --restow --no-folding git
+stow -t ~ -D --no-folding git
 ```
 
-`--no-folding` is used so that directories holding app-generated runtime files (Deskflow TLS certs, new autostart entries, ...) stay real directories — only explicitly tracked files become symlinks.
+`--no-folding` keeps directories that programs write into (Deskflow TLS certificates, new autostart entries) as real directories. Only the tracked files become links.
+
+## Where the lists live
+
+`setup/manifest.sh` is the only place that lists tools and packages. It holds:
+
+- `TOOLS`: what to install, how to detect it, which profile selects it.
+- `STOW_META`: a description and default profiles for each stow package, and what the package expects (a tool, or a program that needs root).
+- `DIR_LINKS`: directories that are linked as a whole instead of file by file. Today this is `~/.claude/plugins/claude-hud`: claude-hud opens `config.json` with `O_NOFOLLOW`, so the file must not be a symlink. The package's `.stow-local-ignore` keeps the directory out of stow, and `setup.sh` links it. claude-hud writes `transcript-cursors/` into it, and `.gitignore` covers that.
+
+A new top-level directory with tracked files appears in the stow menu without any edit, off by default. Add a line to `STOW_META` to give it a description and defaults. The list of packages in this README is not kept by hand; use `./setup.sh --list`.
 
 ## Packages
 
-| Package | Contents |
+Notes for packages that need more than their description in `setup/manifest.sh`:
+
+| Package | Note |
 |---|---|
-| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, slide-maker (Markdown → PDF / PPTX slides with Marp, plus LaTeX pseudocode and draw.io figure pipelines; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`), design-grind + before-after-review (iterative UI design review loop: scored reviews per state until a target, then a before/after decision board — adapted from [sago-cream/skills](https://github.com/sago-cream/skills), installed as siblings so design-grind's `../before-after-review/SKILL.md` reference resolves) |
-| `bash` | bashrc / profile / bash_logout |
-| `btop` | System monitor config (btop 1.4+) |
-| `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
-| `gh` | GitHub CLI aliases & preferences |
-| `git` | Git settings, conventional commit template, global ignore |
-| `pi` | pi coding agent: global `AGENTS.md`, `settings.json` (package list pins `pi-subagents-herdr` + `pi-claude-code-provider` to git tag `v0.1.0`), `models.json` (API key via `$VLLM_API_KEY`), `mcp.json`, `subagents-herdr.json` (user-level config layer), `/init` + `/review` prompt templates, extensions. Packages install via pi itself (`pi update --extensions` to reconcile); to hack on a package, clone it anywhere and run `pi -e <path>` for one invocation. `auth.json`/`secrets/` stay machine-local |
-| `claude` | Claude Code global settings: permissions allow-list, statusLine, enabled plugins. `settings.local.json` and `.claude.json` stay machine-local |
-| `gemini` | Antigravity (agy) global rules: `~/.gemini/GEMINI.md` is a symlink to the shared `agent/.agent/AGENTS.md`. Everything else in `~/.gemini/` (auth, `antigravity*/`, settings) stays machine-local |
-| `kitty` | Kitty terminal config + ssh kitten + current theme |
-| `yazi` | File manager config, keymap, init.lua and vendored plugins |
-| `zed` | Zed editor settings + keymap |
-| `cava` | Audio visualizer config |
-| `deskflow` | Deskflow (Synergy) GUI + server screen layout. `tls/` stays machine-local |
-| `ssh` | SSH client config (host aliases only — no keys, no known_hosts). Repo copy should be `chmod 600` |
-| `condarc` | conda channels/priority |
-| `systemd-user` | Custom user units: deskflow-left-edge, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
-| `autostart` | XDG autostart desktop entries (deskflow, fcitx5, oxwu, syncthing) |
-| `starship` | Cross-shell prompt |
-| `t3code` | T3 Code keybindings: `Ctrl+D` and `Ctrl+B` are left to the shell inside terminals (split is `Ctrl+\`, sidebar is `Ctrl+Shift+B`). T3 Code writes through the symlink, so changes made in the app show up here; restart the app after editing the repo copy directly. The rest of `~/.t3/` (settings, state databases, logs) stays machine-local |
-| `tmux` | Terminal multiplexer config (TPM plugins auto-bootstrap on first run) |
-| `vim` | Vim 9.1+ with XDG-native vimrc |
-| `zsh` | Zsh env, Oh-My-Zsh, per-tool PATH setup |
+| `agents` | Skills in `~/.agents/skills/`, read by pi and opencode. All skills are also linked into `~/.claude/skills`, and slide-maker into `~/.codex/skills`. design-grind and before-after-review are adapted from [sago-cream/skills](https://github.com/sago-cream/skills) and stay siblings so that design-grind's `../before-after-review/SKILL.md` reference resolves. |
+| `agent` | `AGENTS.md` shared by every coding agent. `claude/.claude/CLAUDE.md` and `gemini/.gemini/GEMINI.md` point to it. |
+| `claude` | Global settings, status line and plugin config. `settings.local.json` and `~/.claude.json` stay machine-local. |
+| `pi` | Global `AGENTS.md`, `settings.json`, `models.json` (API key from `$VLLM_API_KEY`), `mcp.json`, prompt templates and extensions. Packages install through pi (`pi update --extensions`). `auth.json` and `secrets/` stay machine-local. |
+| `gemini` | Only `~/.gemini/GEMINI.md`. Auth and settings in `~/.gemini/` stay machine-local. |
+| `deskflow` | Layout and server config. `tls/` stays machine-local. |
+| `systemd-user` | Run `systemctl --user daemon-reload` after a change. |
+| `t3code` | `Ctrl+D` and `Ctrl+B` stay with the shell inside terminals. T3 Code writes through the symlink, so changes made in the app show up here. The rest of `~/.t3/` stays machine-local. |
+| `ssh` | Not tracked (real hosts and IPs). Listed only when a local `ssh/.ssh/config` exists. Keep it at mode 600. |
+| `zsh` | Expects Oh My Zsh with `zsh-autosuggestions` and `zsh-syntax-highlighting`, and Starship. Contains some machine-specific PATH entries (TeX Live, Go) that do nothing where the path is missing. |
+| `tmux` | Expects TPM at `~/.tmux/plugins/tpm`. Select the `tpm` tool to install it and the plugins. |
+
+## Server notes
+
+- The `bash` package is off by default on the `server` profile. A cluster's `~/.bashrc` usually sets modules, XDG paths and site functions, and `setup.sh` would move it to the backup directory. Select `bash` by hand only after you have copied what you need into a `*.local` file.
+- `git/.config/git/config` rewrites pushes to `https://github.com/...` into `git@github.com:...` (`pushInsteadOf`). A new machine needs a GitHub SSH key before it can push. Clone and fetch of public repos stay on https and need no key.
+- The same file still sets `/usr/bin/gh` as the https credential helper. With `gh` from pixi, the binary is `~/.pixi/bin/gh`, so fetch of a private repo over https cannot find the helper. Use an SSH URL for private repos on servers.
+- Your login shell on an HPC host is usually bash and cannot be changed without root. Add `exec zsh` to `~/.bashrc` (guarded by `[[ $- == *i* ]]`) to start zsh from bash.
+- pixi caches packages in `~/.cache/rattler`. On a host with a small home quota, set `PIXI_CACHE_DIR` to a larger disk before you run the script.
+
+## Troubleshooting
+
+**`links into this repo and holds absolute symlinks`**: a directory in `$HOME` (for example `~/.codex`) is a symlink into this repo, and an app has written runtime files into the repo through it. Stow refuses a package that contains absolute symlinks. The message prints the fix: replace the link with a real directory that keeps the data, then restore the tracked files.
+
+```bash
+rm ~/.codex && mv ~/dotfiles/agents/.codex ~/.codex && git -C ~/dotfiles checkout -- agents/.codex
+```
+
+Stop the app first if it is running and you want to avoid it holding old paths. Do not run `pkill` on a shared host, because it also matches other users' processes.
 
 ## Sensitive and machine-specific files
 
-Secrets and per-machine overrides are intentionally not tracked (see `.gitignore`):
+These are not tracked (see `.gitignore`):
 
-- `gh/hosts.yml` (login tokens) — only `config.yml` is symlinked
-- `zsh/secrets.zsh` — create locally after deployment, source it from `.zshrc` if needed
-- `*.local` — machine-local overrides
-- Runtime caches (`plugins/`, `btop/themes/`, `.zcompdump*`, ...) stay as real files/dirs
+- `gh/.config/gh/hosts.yml` (login tokens). Only `config.yml` is linked.
+- `ssh/.ssh/config` (real hosts and IPs).
+- `zsh/secrets.zsh`. Create it locally and source it from `.zshrc` if needed.
+- `*.local` files for per-machine overrides.
+- Runtime caches (`.zcompdump*`, `*.zwc`, TPM plugins, btop themes).
+
+Directories that hold runtime data (`gh`, `tmux/plugins`, `btop/themes`, fcitx5 caches) are never linked as a whole. Only the config files are linked, so runtime files and secrets stay out of the repo.
+
+Not tracked on purpose: the GNOME settings database (dump and load it with `dconf`).
 
 ## Operating system support
 
-**Tested on Ubuntu.** Everything beyond that depends on the package:
-
-| Scope | Portability |
-|---|---|
-| `git` `gh` `starship` `tmux` `vim` `btop` | Cross-platform — work on any Unix (Linux, macOS) that has the tool and GNU Stow |
-| `fcitx5` | Linux only (X11/Wayland input method framework) |
-| `zsh` `bash` | Contain machine-specific PATH entries (`texlive/.../x86_64-linux`, a hardcoded LM Studio path, `/usr/local/go/bin`). Unknown paths are harmless no-ops elsewhere, but only meaningful on the author's Linux machines |
-| `setup.sh` | Installer branches exist for apt/dnf/yum/pacman/apk/brew; apt is the tested Linux path, macOS skips Linux-only packages and bootstraps tools via `Brewfile` |
-
-macOS notes: the zsh configs will load, but the Linux-specific PATH entries are no-ops — prune them or move machine-specific bits into a gitignored `*.local` file.
+Developed on Ubuntu and run with the `local` profile on a SER8 mini PC without problems. The server profile has not been run on a real HPC host yet. `setup.sh` rejects other operating systems. The `Brewfile` remains from an earlier macOS setup and `setup.sh` no longer reads it.

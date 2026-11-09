@@ -1,237 +1,470 @@
 #!/usr/bin/env bash
-
 # =============================================================================
-# Torridfish Dotfiles Setup Script (GNU Stow edition)
+# Interactive dotfiles installer (Linux only).
 #
-# Repo layout: one top-level directory per "stow package". Each package
-# mirrors the target path structure (e.g. git/.config/git/...), so
+#   1. pick a profile: local (workstation) or server (HPC, no sudo)
+#   2. pick which tools to install (pixi, plus a few git clones)
+#   3. pick which stow packages to link into $HOME
 #
-#     stow -d <repo> -t $HOME <package>
-#
-# symlinks the configs into place. Programs with runtime artifacts in the
-# same directory (gh hosts.yml, tmux plugins, btop themes/logs, ...) only
-# get their config files symlinked, keeping junk out of the repo.
+# Nothing here needs sudo. Programs that only a system package manager can
+# provide (kitty, fcitx5, ...) are reported at the end instead of installed.
+# Run ./setup.sh --help for the non-interactive flags.
 # =============================================================================
 
-set -e  # Exit on error
+set -uo pipefail
 
-# Color definitions
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m' # No Color
+if (( BASH_VERSINFO[0] < 4 )); then
+    echo "bash 4 or newer is required" >&2
+    exit 1
+fi
+if [[ $(uname -s) != Linux ]]; then
+    echo "setup.sh supports Linux only" >&2
+    exit 1
+fi
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+# shellcheck source=setup/lib.sh
+source "$SCRIPT_DIR/setup/lib.sh"
+# shellcheck source=setup/manifest.sh
+source "$SCRIPT_DIR/setup/manifest.sh"
 
-NON_INTERACTIVE=false
+export PATH="$HOME/.local/bin:$HOME/.pixi/bin:$PATH"
+
+# -----------------------------------------------------------------------------
+# Options
+# -----------------------------------------------------------------------------
+YES=false
+DRY_RUN=false
+NO_GUM=false
 UNSTOW=false
-for arg in "$@"; do
-    case $arg in
-        -y|--yes) NON_INTERACTIVE=true ;;
-        --unstow) UNSTOW=true ;;
+LIST=false
+PROFILE=""
+TOOLS_ARG=""     # empty = not given; "none" = nothing
+STOW_ARG=""
+USE_GUM=false
+
+usage() {
+    cat <<'EOF'
+Usage: ./setup.sh [options]
+
+With no options the script is interactive.
+
+  --profile local|server   Default selection. Auto-detected when omitted
+                           (server if no DISPLAY or WAYLAND_DISPLAY).
+  --tools a,b,c|all|none   Tools to install (see --list).
+  --stow a,b,c|all|none    Stow packages to link (see --list).
+  -y, --yes                No prompts. Uses the profile defaults for anything
+                           not given by --tools or --stow.
+  --unstow                 Remove the links of the selected stow packages.
+  --dry-run                Print every command, change nothing.
+  --list                   Show tools and stow packages with their defaults.
+  --no-gum                 Use plain bash menus.
+  -h, --help               Show this help.
+
+Examples:
+  ./setup.sh                                  # interactive
+  ./setup.sh -y --profile server              # HPC login node, all defaults
+  ./setup.sh -y --tools none --stow git,zsh   # only link two packages
+EOF
+}
+
+while (( $# )); do
+    case $1 in
+        --profile)  PROFILE=${2:-}; shift ;;
+        --tools)    TOOLS_ARG=${2:-}; shift ;;
+        --stow)     STOW_ARG=${2:-}; shift ;;
+        -y|--yes)   YES=true ;;
+        --unstow)   UNSTOW=true ;;
+        --dry-run)  DRY_RUN=true ;;
+        --list)     LIST=true ;;
+        --no-gum)   NO_GUM=true ;;
+        -h|--help)  usage; exit 0 ;;
+        *) error "Unknown option: $1"; usage >&2; exit 1 ;;
     esac
+    shift
 done
 
-print_info()    { echo -e "${BLUE}[INFO]${NC} $1"; }
-print_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-print_warning() { echo -e "${YELLOW}[WARNING]${NC} $1"; }
-print_error()   { echo -e "${RED}[ERROR]${NC} $1"; }
+# -----------------------------------------------------------------------------
+# Load the manifest into lookup tables
+# -----------------------------------------------------------------------------
+declare -a T_IDS=() S_IDS=()
+declare -A T_CHECK T_METHOD T_SPEC T_PROF T_DESC
+declare -A S_PROF S_NEEDS S_DESC
 
-# =============================================================================
-# Detect Operating System
-# =============================================================================
-detect_os() {
-    if [[ -f /etc/os-release ]]; then
-        . /etc/os-release
-        OS=$ID
-    elif [[ "$OSTYPE" == "darwin"* ]]; then
-        OS="macos"
-    else
-        OS="unknown"
-    fi
-    print_info "Detected OS: $OS"
-}
-
-# =============================================================================
-# Install package using appropriate package manager
-# =============================================================================
-install_package() {
-    local package_name="$1"
-
-    case $OS in
-        ubuntu|debian|pop)
-            sudo apt update
-            sudo apt install -y "$package_name"
-            ;;
-        fedora)
-            sudo dnf install -y "$package_name"
-            ;;
-        centos|rhel)
-            sudo yum install -y "$package_name"
-            ;;
-        arch|manjaro)
-            sudo pacman -S --noconfirm "$package_name"
-            ;;
-        alpine)
-            sudo apk add --no-cache "$package_name"
-            ;;
-        macos)
-            brew install "$package_name"
-            ;;
-        *)
-            print_error "Unsupported OS: $OS"
-            return 1
-            ;;
-    esac
-}
-
-# Packages that only make sense on Linux; skipped automatically on macOS.
-LINUX_ONLY_PACKAGES=(autostart deskflow fcitx5 systemd-user)
-
-# =============================================================================
-# Ensure GNU Stow is available
-# =============================================================================
-ensure_stow() {
-    if command -v stow >/dev/null 2>&1; then
-        print_info "GNU Stow $(stow --version | grep -o '[0-9.]*$') found"
-        return 0
-    fi
-
-    if $NON_INTERACTIVE; then
-        print_info "Stow not found, trying to install..."
-        install_package stow
-    else
-        read -rp "GNU Stow is not installed. Install it now? [Y/n] " answer
-        if [[ ! $answer =~ ^[Nn] ]]; then
-            install_package stow
-        else
-            print_error "GNU Stow is required. Install it manually, e.g.: sudo apt install stow"
-            exit 1
-        fi
-    fi
-}
-
-# =============================================================================
-# All stow packages = every top-level directory (except .git)
-# Packages may contain XDG configs (.config/...) or home-level dotfiles
-# (e.g. zsh/.zshrc, bash/.profile) — stow -t ~ handles both.
-# =============================================================================
-get_packages() {
-    local pkgs=()
-    for dir in "$SCRIPT_DIR"/*/; do
-        local name="$(basename "$dir")"
-        [[ "$name" == ".git" ]] && continue
-        pkgs+=("$name")
+load_manifest() {
+    local line id check method spec prof desc needs pkg dir
+    for line in "${TOOLS[@]}"; do
+        IFS='|' read -r id check method spec prof desc <<<"$line"
+        T_IDS+=("$id")
+        T_CHECK[$id]=$check; T_METHOD[$id]=$method; T_SPEC[$id]=$spec
+        T_PROF[$id]=$prof; T_DESC[$id]=$desc
     done
-    echo "${pkgs[@]}"
+    for line in "${STOW_META[@]}"; do
+        IFS='|' read -r pkg prof needs desc <<<"$line"
+        S_PROF[$pkg]=$prof; S_NEEDS[$pkg]=$needs; S_DESC[$pkg]=$desc
+    done
+    # Discover packages from the directories, so a new one is never skipped.
+    for dir in "$SCRIPT_DIR"/*/; do
+        pkg=$(basename "$dir")
+        [[ " ${STOW_EXCLUDE[*]} " == *" $pkg "* ]] && continue
+        [[ -n $(find "$dir" \( -type f -o -type l \) -print -quit) ]] || continue
+        S_IDS+=("$pkg")
+        : "${S_PROF[$pkg]:=-}"
+        : "${S_NEEDS[$pkg]:=}"
+        : "${S_DESC[$pkg]:=(no description in setup/manifest.sh)}"
+    done
 }
 
-# =============================================================================
-# Back up any real files that would collide with stow symlinks
-# (skips symlinks already pointing into this repo)
-# =============================================================================
-backup_conflicts() {
-    local pkg="$1"
-    local backup_root="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
-    local backed_up=0
-    local rel target
+detect_profile() {
+    if [[ -n ${DISPLAY:-}${WAYLAND_DISPLAY:-} ]]; then echo local; else echo server; fi
+}
 
+# profile_letter local|server -> l|s
+profile_letter() { [[ $1 == local ]] && echo l || echo s; }
+
+# defaults_for_profile KIND(tools|stow) LETTER -> space-separated ids
+default_tools() {
+    local id out=()
+    for id in "${T_IDS[@]}"; do
+        [[ ${T_PROF[$id]} == *"$1"* ]] || continue
+        tool_present "${T_CHECK[$id]}" && continue   # already installed
+        out+=("$id")
+    done
+    echo "${out[*]:-}"
+}
+default_stow() {
+    local id out=()
+    for id in "${S_IDS[@]}"; do
+        [[ ${S_PROF[$id]} == *"$1"* ]] && out+=("$id")
+    done
+    echo "${out[*]:-}"
+}
+
+# split_list "a,b" "ids..." -> space-separated ids; validates against known ids
+split_list() {
+    local arg=$1 kind=$2; shift 2
+    case $arg in
+        none) echo ""; return 0 ;;
+        all)  echo "$*"; return 0 ;;
+    esac
+    local item out=()
+    IFS=, read -ra items <<<"$arg"
+    for item in "${items[@]}"; do
+        [[ " $* " == *" $item "* ]] || { error "Unknown $kind: $item (see --list)"; return 1; }
+        out+=("$item")
+    done
+    echo "${out[*]:-}"
+}
+
+list_all() {
+    local id mark
+    printf 'Tools (l = local default, s = server default)\n'
+    for id in "${T_IDS[@]}"; do
+        mark=$(tool_present "${T_CHECK[$id]}" && echo "installed" || echo "-")
+        printf '  %-10s %-3s %-9s %s\n' "$id" "${T_PROF[$id]}" "$mark" "${T_DESC[$id]}"
+    done
+    printf '\nStow packages\n'
+    for id in "${S_IDS[@]}"; do
+        printf '  %-13s %-3s %s\n' "$id" "${S_PROF[$id]}" "${S_DESC[$id]}"
+    done
+}
+
+# -----------------------------------------------------------------------------
+# Tool installation
+# -----------------------------------------------------------------------------
+FAILED=()
+
+install_tool() {
+    local id=$1 method=${T_METHOD[$1]} spec=${T_SPEC[$1]}
+    info "Installing $id"
+    local rc=0
+    case $method in
+        pixi)
+            # shellcheck disable=SC2086
+            run pixi global install $spec || rc=$? ;;
+        fn|post) "$spec" || rc=$? ;;
+        *) error "Bad method '$method' for $id"; rc=1 ;;
+    esac
+    if (( rc != 0 )); then
+        error "Failed: $id"
+        FAILED+=("$id")
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Stow
+# -----------------------------------------------------------------------------
+BACKUP_ROOT="$HOME/.dotfiles-backup/$(date +%Y%m%d-%H%M%S)"
+
+# Move real files that would collide with a stow link into the backup dir.
+backup_conflicts() {
+    local pkg=$1 rel target
     while IFS= read -r rel; do
+        is_dir_link_path "$pkg" "$rel" && continue   # handled by link_dirs
         target="$HOME/$rel"
-        if [[ -e "$target" || -L "$target" ]]; then
-            # Resolve the full path: the final component may be a real file
-            # reached THROUGH a stowed directory symlink (e.g. yazi plugins/),
-            # so a plain -L check on the last component is not enough.
-            if [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]]; then
-                continue  # already managed by us
-            fi
-            mkdir -p "$backup_root/$(dirname "$rel")"
-            mv "$target" "$backup_root/$rel"
-            print_warning "Backed up ~/$rel -> $backup_root/$rel"
-            backed_up=1
+        [[ -e $target || -L $target ]] || continue
+        # Resolve fully: the last component may be a real file reached through
+        # a stowed directory symlink.
+        [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]] && continue
+        warn "Backing up ~/$rel -> $BACKUP_ROOT/$rel"
+        if ! $DRY_RUN; then
+            mkdir -p "$BACKUP_ROOT/$(dirname "$rel")"
+            mv "$target" "$BACKUP_ROOT/$rel"
         fi
     done < <(cd "$SCRIPT_DIR/$pkg" && find . \( -type f -o -type l \) | sed 's|^\./||')
-
-    return 0
 }
 
-# =============================================================================
-# Bootstrap TPM (tmux plugin manager) on fresh machines
-# =============================================================================
-bootstrap_tpm() {
-    local tpm_dir="$HOME/.config/tmux/plugins/tpm"
-    if [[ ! -e "$tpm_dir" ]] && command -v git >/dev/null 2>&1; then
-        print_info "Bootstrapping TPM..."
-        git clone --depth 1 https://github.com/tmux-plugins/tpm "$tpm_dir"
-        "$tpm_dir/bin/install_plugins.sh" || true
-    fi
+# True if REL (a path inside PKG) is, or is under, a DIR_LINKS entry of PKG.
+is_dir_link_path() {
+    local pkg=$1 rel=$2 entry dir
+    for entry in "${DIR_LINKS[@]}"; do
+        [[ ${entry%%:*} == "$pkg" ]] || continue
+        dir=${entry#*:}
+        [[ $rel == "$dir" || $rel == "$dir"/* ]] && return 0
+    done
+    return 1
 }
 
-# =============================================================================
-# Main
-# =============================================================================
-main() {
-    detect_os
-    ensure_stow
-
-    local packages
-    read -ra packages <<< "$(get_packages)"
-    if [[ ${#packages[@]} -eq 0 ]]; then
-        print_error "No stow packages found in $SCRIPT_DIR"
-        exit 1
-    fi
-    print_info "Packages: ${packages[*]}"
-
-    # Skip Linux-only packages on non-Linux hosts (macOS)
-    if [[ "$OS" == "macos" ]]; then
-        local -a selected=()
-        local pkg
-        for pkg in "${packages[@]}"; do
-            if [[ " ${LINUX_ONLY_PACKAGES[*]} " == *" $pkg "* ]]; then
-                print_info "Skipping $pkg (Linux-only)"
-                continue
-            fi
-            selected+=("$pkg")
-        done
-        if [[ ${#selected[@]} -eq 0 ]]; then
-            print_error "No packages left to stow on $OS"
-            exit 1
-        fi
-        packages=("${selected[@]}")
-        print_info "Packages (after OS filter): ${packages[*]}"
-    fi
-
-    local flag=(--restow --no-folding)
-    local action="Stowing"
-    if $UNSTOW; then
-        flag=(-D --no-folding)
-        action="Unstowing"
-    fi
-
-    # --no-folding: never fold package dirs into a single symlink, so app-
-    # generated runtime files (Deskflow tls/, new autostart entries, ...)
-    # stay as real files in $HOME instead of landing inside the repo.
-    for pkg in "${packages[@]}"; do
+# Link (or unlink) the DIR_LINKS directories of one package.
+link_dirs() {
+    local pkg=$1 entry rel src target
+    for entry in "${DIR_LINKS[@]}"; do
+        [[ ${entry%%:*} == "$pkg" ]] || continue
+        rel=${entry#*:}
+        src="$SCRIPT_DIR/$pkg/$rel"
+        target="$HOME/$rel"
         if $UNSTOW; then
-            print_info "$action $pkg..."
-            stow -d "$SCRIPT_DIR" -t "$HOME" "${flag[@]}" "$pkg"
-        else
-            backup_conflicts "$pkg"
-            print_info "$action $pkg..."
-            stow -d "$SCRIPT_DIR" -t "$HOME" "${flag[@]}" "$pkg"
+            [[ -L $target && "$(readlink -f "$target")" == "$src" ]] && run rm "$target"
+            continue
         fi
-        print_success "$pkg done"
+        [[ -L $target && "$(readlink -f "$target")" == "$src" ]] && continue   # already linked
+        if [[ -e $target || -L $target ]]; then
+            warn "Backing up ~/$rel -> $BACKUP_ROOT/$rel"
+            if ! $DRY_RUN; then
+                mkdir -p "$BACKUP_ROOT/$(dirname "$rel")"
+                mv "$target" "$BACKUP_ROOT/$rel"
+            fi
+        fi
+        run mkdir -p "$(dirname "$target")"
+        run ln -s "$src" "$target"
+    done
+}
+
+# A directory in $HOME that links into this repo ("folded") lets an app write
+# runtime files into the repo. If one of those files is an absolute symlink,
+# stow refuses the whole package ("source is an absolute symlink"). Detect that
+# before stowing and print the fix. A folded link without absolute symlinks is
+# fine: stow unfolds it by itself.
+check_folded() {
+    local pkg=$1 rel target found bad=0
+    while IFS= read -r rel; do
+        is_dir_link_path "$pkg" "$rel" && continue
+        target="$HOME/$rel"
+        [[ -L $target ]] || continue
+        [[ "$(readlink -f "$target")" == "$SCRIPT_DIR"/* ]] || continue
+        found=$(find "$SCRIPT_DIR/$pkg/$rel" -type l -lname '/*' 2>/dev/null | head -n 3)
+        [[ -n $found ]] || continue
+        error "~/$rel links into this repo and holds absolute symlinks (runtime data that an app wrote through the link):"
+        printf '      %s\n' $found >&2
+        printf '    Make it a real directory first, then run setup.sh again:\n' >&2
+        printf '      rm ~/%s && mv %s/%s/%s ~/%s && git -C %s checkout -- %s/%s\n' \
+            "$rel" "$SCRIPT_DIR" "$pkg" "$rel" "$rel" "$SCRIPT_DIR" "$pkg" "$rel" >&2
+        bad=1
+    done < <(cd "$SCRIPT_DIR/$pkg" && find . -mindepth 1 -type d | sed 's|^\./||')
+    return "$bad"
+}
+
+# --no-folding keeps directories that apps write into (Deskflow tls/, new
+# autostart entries, ...) as real directories; only tracked files become links.
+stow_pkg() {
+    local pkg=$1
+    if $UNSTOW; then
+        run stow -d "$SCRIPT_DIR" -t "$HOME" -D --no-folding "$pkg" || return 1
+        link_dirs "$pkg"
+        return 0
+    fi
+    check_folded "$pkg" || return 1
+    backup_conflicts "$pkg"
+    stow_apply "$pkg" || return 1
+    link_dirs "$pkg"
+}
+
+# Run stow. backup_conflicts cannot predict every case stow rejects (for example
+# a copy of a tracked symlink that resolves into the repo but is not a stow
+# link). When stow names such targets, back them up and retry once.
+stow_apply() {
+    local pkg=$1 out rc paths p
+    local -a cmd=(stow -d "$SCRIPT_DIR" -t "$HOME" --restow --no-folding "$pkg")
+    if $DRY_RUN; then run "${cmd[@]}"; return; fi
+    out=$("${cmd[@]}" 2>&1); rc=$?
+    if (( rc != 0 )) && ! grep -q 'absolute symlink' <<<"$out"; then
+        paths=$(sed -n -e 's/^  \* existing target is not owned by stow: //p' \
+                       -e 's/^  \* existing target is neither a link nor a directory: //p' <<<"$out")
+        if [[ -n $paths ]]; then
+            while IFS= read -r p; do
+                [[ -e $HOME/$p || -L $HOME/$p ]] || continue
+                warn "Backing up ~/$p -> $BACKUP_ROOT/$p (stow does not own it)"
+                mkdir -p "$BACKUP_ROOT/$(dirname "$p")"
+                mv "$HOME/$p" "$BACKUP_ROOT/$p"
+            done <<<"$paths"
+            out=$("${cmd[@]}" 2>&1); rc=$?
+        fi
+    fi
+    [[ -n $out ]] && printf '%s\n' "$out" >&2
+    return "$rc"
+}
+
+# -----------------------------------------------------------------------------
+# Summary notes
+# -----------------------------------------------------------------------------
+# note_needs "tools..." "stow..." : warn about missing dependencies and
+# programs that need the system package manager.
+note_needs() {
+    local -a tools=($1) stow=($2)
+    local pkg need sys=() warns=()
+    for pkg in "${stow[@]}"; do
+        for need in ${S_NEEDS[$pkg]}; do
+            if [[ $need == sys:* ]]; then
+                have "${need#sys:}" || sys+=("${need#sys:}")
+            elif [[ -n ${T_CHECK[$need]:-} ]] && ! tool_present "${T_CHECK[$need]}" \
+                    && [[ " ${tools[*]} " != *" $need "* ]]; then
+                warns+=("stow '$pkg' expects '$need', which is not installed or selected")
+            fi
+        done
+    done
+    local w
+    for w in "${warns[@]+"${warns[@]}"}"; do warn "$w"; done
+    if (( ${#sys[@]} )); then
+        local uniq; uniq=$(printf '%s\n' "${sys[@]}" | sort -u | tr '\n' ' ')
+        warn "Not installed and needs the system package manager (root): $uniq"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# Main
+# -----------------------------------------------------------------------------
+main() {
+    load_manifest
+    if $LIST; then list_all; exit 0; fi
+
+    if [[ -z $PROFILE ]]; then PROFILE=$(detect_profile); fi
+    [[ $PROFILE == local || $PROFILE == server ]] || { error "--profile must be local or server"; exit 1; }
+
+    local interactive=true
+    if $YES || [[ -n $TOOLS_ARG || -n $STOW_ARG ]]; then interactive=false; fi
+    if $interactive; then init_ui; fi
+    if $interactive && ! [[ -t 0 ]]; then
+        warn "stdin is not a terminal; menus read from stdin"
+    fi
+
+    if $interactive; then
+        menu_one "Profile" "$PROFILE" \
+            "local|local   workstation with a desktop" \
+            "server|server  HPC or remote host without sudo"
+        PROFILE=$MENU_ONE
+    fi
+    local letter; letter=$(profile_letter "$PROFILE")
+    info "Profile: $PROFILE (tools install into ~/.pixi and ~/.local, no sudo)"
+
+    # ---- choose tools ----
+    local -a tools=() stow=()
+    local tmp
+    if $UNSTOW; then
+        :
+    elif [[ -n $TOOLS_ARG ]]; then
+        tmp=$(split_list "$TOOLS_ARG" tool "${T_IDS[@]}") || exit 1
+        read -ra tools <<<"$tmp"
+    elif $interactive; then
+        local -a entries=() ; local id
+        for id in "${T_IDS[@]}"; do
+            local tag=""; tool_present "${T_CHECK[$id]}" && tag=" (installed)"
+            entries+=("$id|$(printf '%-9s %s%s' "$id" "${T_DESC[$id]}" "$tag")")
+        done
+        menu_multi "Tools to install" "$(default_tools "$letter")" "${entries[@]}"
+        tools=("${MENU_RESULT[@]+"${MENU_RESULT[@]}"}")
+    else
+        read -ra tools <<<"$(default_tools "$letter")"
+    fi
+
+    # ---- choose stow packages ----
+    if [[ -n $STOW_ARG ]]; then
+        tmp=$(split_list "$STOW_ARG" "stow package" "${S_IDS[@]}") || exit 1
+        read -ra stow <<<"$tmp"
+    elif $interactive; then
+        local -a entries=() ; local id
+        for id in "${S_IDS[@]}"; do
+            entries+=("$id|$(printf '%-13s %s' "$id" "${S_DESC[$id]}")")
+        done
+        menu_multi "Stow packages to $($UNSTOW && echo unlink || echo link) into \$HOME" \
+            "$(default_stow "$letter")" "${entries[@]}"
+        stow=("${MENU_RESULT[@]+"${MENU_RESULT[@]}"}")
+    else
+        read -ra stow <<<"$(default_stow "$letter")"
+    fi
+
+    # Stow is needed to link anything.
+    if (( ${#stow[@]} )) && ! have stow && [[ " ${tools[*]-} " != *" stow "* ]] && ! $UNSTOW; then
+        info "stow is required to link configs; adding it to the install list"
+        tools=(stow "${tools[@]+"${tools[@]}"}")
+    fi
+
+    # ---- summary ----
+    printf '\n'
+    info "Install: ${tools[*]:-(nothing)}"
+    info "$($UNSTOW && echo Unlink || echo Link):    ${stow[*]:-(nothing)}"
+    $DRY_RUN && info "Dry run: no changes will be made"
+    note_needs "${tools[*]-}" "${stow[*]-}"
+    if (( ${#tools[@]} + ${#stow[@]} == 0 )); then info "Nothing to do"; exit 0; fi
+    if $interactive; then confirm "Proceed?" || { info "Aborted"; exit 0; }; fi
+
+    # ---- run ----
+    local id
+    local -a pixi_tools=() fn_tools=() post_tools=()
+    for id in "${tools[@]+"${tools[@]}"}"; do
+        case ${T_METHOD[$id]} in
+            pixi) pixi_tools+=("$id") ;;
+            fn)   fn_tools+=("$id") ;;
+            post) post_tools+=("$id") ;;
+        esac
     done
 
-    if ! $UNSTOW; then
-        # shellcheck disable=SC2076
-        if [[ " ${packages[*]} " =~ " tmux " ]]; then
-            bootstrap_tpm
+    if (( ${#pixi_tools[@]} )); then
+        if ! ensure_pixi; then
+            error "pixi is unavailable; skipping: ${pixi_tools[*]}"
+            FAILED+=("${pixi_tools[@]}")
+            pixi_tools=()
         fi
-        print_success "All packages stowed. Relaunch your shell / apps to pick up changes."
-    else
-        print_success "All packages unstowed."
+    fi
+    # pixi first: git must exist before the git-clone installers run.
+    for id in "${pixi_tools[@]+"${pixi_tools[@]}"}" "${fn_tools[@]+"${fn_tools[@]}"}"; do
+        install_tool "$id"
+    done
+
+    if (( ${#stow[@]} )); then
+        if ! have stow && ! $DRY_RUN; then
+            error "stow is not available; cannot link packages"
+            FAILED+=("stow")
+        else
+            local pkg
+            for pkg in "${stow[@]}"; do
+                info "$($UNSTOW && echo Unlinking || echo Linking) $pkg"
+                stow_pkg "$pkg" || { error "stow failed for $pkg"; FAILED+=("stow:$pkg"); }
+            done
+        fi
+    fi
+
+    for id in "${post_tools[@]+"${post_tools[@]}"}"; do
+        install_tool "$id"
+    done
+
+    printf '\n'
+    if (( ${#FAILED[@]} )); then
+        error "Finished with failures: ${FAILED[*]}"
+        exit 1
+    fi
+    success "Done. Open a new shell to pick up the changes."
+    if [[ " ${stow[*]-} " == *" zsh "* && ${SHELL##*/} != zsh ]]; then
+        info "Your login shell is ${SHELL##*/}. Use 'chsh -s \$(command -v zsh)' (needs root) or add 'exec zsh' to ~/.bashrc on hosts where you cannot change it."
     fi
 }
 

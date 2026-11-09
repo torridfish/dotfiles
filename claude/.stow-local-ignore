@@ -1,0 +1,29 @@
+# This file replaces stow's built-in ignore list, so the defaults are repeated.
+
+RCS
+.+,v
+
+CVS
+\.\#.+       # CVS conflict files / emacs lock files
+\.cvsignore
+
+\.svn
+_darcs
+\.hg
+
+\.git
+\.gitignore
+\.gitmodules
+
+.+~          # emacs backup files
+\#.*\#       # emacs autosave files
+
+^/README.*
+^/LICENSE.*
+^/COPYING
+
+^/\.stow-local-ignore$
+
+# Linked as a whole directory by setup.sh (see DIR_LINKS): claude-hud opens
+# config.json with O_NOFOLLOW, so the file itself must not be a symlink.
+^/\.claude/plugins/claude-hud$
