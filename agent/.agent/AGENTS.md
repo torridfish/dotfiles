@@ -14,6 +14,37 @@
     - If no source code exist, then go fetch html file.
     - PDF is your last choice, do not read pdf first (e.g. `https://arxiv.org/pdf/xxxx`).
 
+## Writing style
+Applies to chat replies and to every file, commit, PR and slide I write.
+When writing documents (README, PR description, docs), also apply asd-ste100 in its STE-flavored mode.
+
+### Punctuation
+- Never use an em dash (—, or the Chinese ——) as a parenthetical aside or a sentence break,
+  and never use a double hyphen (--) for the same purpose. Use a colon, comma, period or parentheses.
+- An en dash (–) is fine for number ranges (#116–#129).
+- Always use half-width parentheses () and brackets [], including inside Chinese text.
+  Never use full-width （）or 【】.
+
+### Wording
+- Say things literally. No metaphor or personification: write "causes slow requests", not
+  "this bites"; "needs", not "wants". Name who or what acts.
+- Keep "that" in relative clauses ("the fix that we shipped").
+- Keep the verb close to its subject; put long asides after the verb.
+- Use a noun plus a plain verb, not a noun used as a verb ("add a footnote", not "footnote it").
+  At most two nouns in a row; more get "for" or "of".
+- On first use, write a proper term in full, then the acronym in parentheses:
+  "Attack Success Rate (ASR)". Use the acronym alone after that.
+- Do not invent a missing fact, number or actor. Ask, or leave a bracketed placeholder.
+
+### Phrases and structures to avoid
+- "It's not X, it's Y", and the Chinese 「不是……而是……」 pattern. State Y directly.
+- "It is worth noting that" and 「值得注意的是」. Say the thing.
+- A closing sentence that summarizes what the text just said.
+
+### Format
+- Dates read "Nov. 8, 2026".
+- No emoji.
+
 ## Language
 - Default to English.
 - If the user's latest message is primarily in Chinese, reply in Traditional Chinese as used in Taiwan (zh-TW).

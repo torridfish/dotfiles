@@ -8,7 +8,7 @@ Each top-level directory is a **stow package** that mirrors the target structure
 
 ```
 dotfiles/
-├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); research-slides is also linked into ~/.claude/skills and ~/.codex/skills
+├── agents/       → ~/.agents/skills/* (cross-agent skills, read natively by pi & opencode); all of them are also linked into ~/.claude/skills (slide-maker into ~/.codex/skills too); design-grind & before-after-review are adapted from sago-cream/skills
 ├── autostart/    → ~/.config/autostart/*.desktop
 ├── bash/         → ~/.bashrc, ~/.bash_logout, ~/.profile
 ├── btop/         → ~/.config/btop/btop.conf
@@ -25,6 +25,7 @@ dotfiles/
 ├── ssh/          → ~/.ssh/config (untracked, in .gitignore — real hosts/IPs kept local)
 ├── starship/     → ~/.config/starship.toml
 ├── systemd-user/ → ~/.config/systemd/user/{deskflow-left-edge,hermes-gateway}.service
+├── t3code/       → ~/.t3/userdata/keybindings.json
 ├── tmux/         → ~/.config/tmux/tmux.conf
 ├── vim/          → ~/.config/vim/vimrc
 ├── yazi/         → ~/.config/yazi/{yazi.toml,keymap.toml,package.toml,init.lua,plugins/}
@@ -75,7 +76,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 
 | Package | Contents |
 |---|---|
-| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, research-slides (deck builder + TeX/Carbon/draw.io figure pipelines for the Research Slides design system; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`) |
+| `agents` | Cross-agent skills in `~/.agents/skills/`: tmux-pane-collab, ghidra, git-master, playwright-cli, convert-documents-to-markdown, antigravity-looker, slide-maker (Markdown → PDF / PPTX slides with Marp, plus LaTeX pseudocode and draw.io figure pipelines; run its `scripts/setup.sh` once per machine; the package also links it into `~/.claude/skills/` and `~/.codex/skills/`), design-grind + before-after-review (iterative UI design review loop: scored reviews per state until a target, then a before/after decision board — adapted from [sago-cream/skills](https://github.com/sago-cream/skills), installed as siblings so design-grind's `../before-after-review/SKILL.md` reference resolves) |
 | `bash` | bashrc / profile / bash_logout |
 | `btop` | System monitor config (btop 1.4+) |
 | `fcitx5` | Input method: Boshiamy, Mozc, punctuation, shortcuts |
@@ -94,6 +95,7 @@ stow -t ~ --restow btop fcitx5 gh git starship tmux vim   # everything
 | `systemd-user` | Custom user units: deskflow-left-edge, hermes-gateway (run `systemctl --user daemon-reload` after changes) |
 | `autostart` | XDG autostart desktop entries (deskflow, fcitx5, oxwu, syncthing) |
 | `starship` | Cross-shell prompt |
+| `t3code` | T3 Code keybindings: `Ctrl+D` and `Ctrl+B` are left to the shell inside terminals (split is `Ctrl+\`, sidebar is `Ctrl+Shift+B`). T3 Code writes through the symlink, so changes made in the app show up here; restart the app after editing the repo copy directly. The rest of `~/.t3/` (settings, state databases, logs) stays machine-local |
 | `tmux` | Terminal multiplexer config (TPM plugins auto-bootstrap on first run) |
 | `vim` | Vim 9.1+ with XDG-native vimrc |
 | `zsh` | Zsh env, Oh-My-Zsh, per-tool PATH setup |

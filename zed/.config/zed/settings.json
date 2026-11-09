@@ -2734,6 +2734,17 @@
                     ]
                 }
             ]
+        },
+        {
+            "host": "zeldajr",
+            "args": [],
+            "projects": [
+                {
+                    "paths": [
+                        "/home/torridfish/Code/qwen3d"
+                    ]
+                }
+            ]
         }
     ],
     // Whether to read ~/.ssh/config for ssh connection sources.

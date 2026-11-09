@@ -1,6 +1,0 @@
-schema_version: "1.1"
-name: code-compare-slide
-expected_outcome: |
-  Three Carbon images rendered with code2img.sh (monokai, no shadow, line numbers) and their .py sources sit beside
-  2026-11-05/code-compare.pptx; the slide uses the CONTENT layout with the prompt image under the rule and the two
-  responses as images in the two 4.55in columns with serif "Response:" labels; no code is typed on the slide.

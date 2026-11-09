@@ -1,5 +1,28 @@
 {
   "providers": {
+    "lfm3-local": {
+      "baseUrl": "http://127.0.0.1:8110/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "authHeader": true,
+      "compat": {
+        "supportsDeveloperRole": false,
+        "supportsReasoningEffort": false,
+        "supportsUsageInStreaming": true,
+        "maxTokensField": "max_tokens"
+      },
+      "models": [
+        {
+          "id": "lfm3",
+          "name": "LFM3-1.7B (local llama.cpp :8110)",
+          "reasoning": false,
+          "input": ["text"],
+          "contextWindow": 65536,
+          "maxTokens": 4096,
+          "cost": { "input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0 }
+        }
+      ]
+    },
     "local": {
       "baseUrl": "https://api.torridfish.com/v1",
       "api": "openai-completions",
@@ -7,15 +30,24 @@
       "authHeader": true,
       "compat": {
         "supportsDeveloperRole": false,
-        "supportsReasoningEffort": false,
+        "supportsReasoningEffort": true,
         "supportsUsageInStreaming": false,
         "maxTokensField": "max_tokens"
       },
       "models": [
         {
-          "id": "GLM-5.3-Flash-EXL3",
+          "id": "GLM-5.3-Flash",
           "name": "GLM-5.3-Flash-EXL3",
           "reasoning": true,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "low",
+            "low": "low",
+            "medium": "high",
+            "high": "high",
+            "xhigh": "xhigh",
+            "max": "max"
+          },
           "input": ["text", "image"],
           "contextWindow": 1048576,
           "maxTokens": 65535,
