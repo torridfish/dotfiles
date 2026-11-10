@@ -1,0 +1,409 @@
+<title>Paper Short Name Annotated</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout: navy title band, sticky bar with section links and the highlight legend,
+   then one grid row per paragraph (original + restatement left, annotation right).
+   Figures and tables sit between rows at the place the text first refers to them. */
+:root {
+  --paper: #f7f4ec;
+  --ink: #1f2430;
+  --ink-soft: #5e5f5b;
+  --rule: #d9d3c4;
+  --navy: #15283f;
+  --navy-ink: #f3efe4;
+  --navy-soft: #c9d1dd;
+  --plain-bg: #efeadf;
+  --plain-line: #b9b2a3;
+  --card-bg: #fcfaf5;
+  --card-line: #2c4a6e; --link: #1f2430;
+  --fig-bg: #ffffff;
+  --h-thesis: #fcefb8;   --s-thesis: #8a6400;
+  --h-concept: #fcddd0;  --s-concept: #b23a1c;
+  --h-evidence: #d6e6fc; --s-evidence: #1f5aa8;
+  --h-concession: #d3ecd6; --s-concession: #2a7a45;
+  --h-method: #eedcf8;   --s-method: #8a2f9c;
+  --tag-ink: #ffffff;
+  --ours: #f3ecd6;
+  --font-text: "Lora", Georgia, "Times New Roman", serif;
+  --font-ui: "IBM Plex Sans", "Helvetica Neue", Arial, sans-serif;
+  --bar-h: 46px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #16191f; --ink: #e6e2d8; --ink-soft: #a3a89f; --rule: #3a404b;
+    --navy: #0e1a2a; --navy-ink: #e8e3d6; --navy-soft: #93a1b5;
+    --plain-bg: #242a35; --plain-line: #857c5e; --card-bg: #1b1f27; --card-line: #8b93a3; --link: #e6e2d8;
+    --fig-bg: #f4f1ea;
+    --h-thesis: rgba(255,215,94,.20);  --s-thesis: #ffd75e;
+    --h-concept: rgba(255,154,122,.20); --s-concept: #ff9d7a;
+    --h-evidence: rgba(111,178,255,.22); --s-evidence: #6fb2ff;
+    --h-concession: rgba(126,215,154,.18); --s-concession: #7ed79a;
+    --h-method: rgba(197,155,255,.22); --s-method: #c59bff;
+    --tag-ink: #14171c; --ours: #2a2a22;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #16191f; --ink: #e6e2d8; --ink-soft: #a3a89f; --rule: #3a404b;
+  --navy: #0e1a2a; --navy-ink: #e8e3d6; --navy-soft: #93a1b5;
+  --plain-bg: #242a35; --plain-line: #857c5e; --card-bg: #1b1f27; --card-line: #8b93a3; --link: #e6e2d8;
+  --fig-bg: #f4f1ea;
+  --h-thesis: rgba(255,215,94,.20);  --s-thesis: #ffd75e;
+  --h-concept: rgba(255,154,122,.20); --s-concept: #ff9d7a;
+  --h-evidence: rgba(111,178,255,.22); --s-evidence: #6fb2ff;
+  --h-concession: rgba(126,215,154,.18); --s-concession: #7ed79a;
+  --h-method: rgba(197,155,255,.22); --s-method: #c59bff;
+  --tag-ink: #14171c; --ours: #2a2a22;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--font-ui); font-size: 15px; line-height: 1.55; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--navy); }
+h1, h2, h3 { text-wrap: balance; margin: 0; }
+
+.wrap { max-width: 1200px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+
+/* Title band */
+.band { background: var(--navy); color: var(--navy-ink); }
+.band .wrap { padding-block: 30px 26px; display: grid; gap: 10px; }
+.band h1 { font-family: var(--font-text); font-weight: 600; font-size: clamp(22px, 2.5vw, 30px); line-height: 1.22; text-wrap: pretty; }
+.band .meta { font-size: 14px; color: var(--navy-soft); display: grid; gap: 5px; }
+.band .meta .links { display: flex; flex-wrap: wrap; gap: 2px 2ch; }
+.band .meta .authors { color: var(--navy-ink); }
+.band .meta a { color: var(--navy-ink); white-space: nowrap; text-decoration: underline; text-decoration-color: rgba(255,255,255,.35); text-underline-offset: 3px; }
+.band .meta a::after { content: "\2197"; font-size: .85em; margin-left: 3px; opacity: .7; display: inline-block; text-decoration: none; }
+.band .meta a:hover, .band .meta a:focus-visible { text-decoration-color: currentColor; outline: none; }
+
+/* Sticky bar: sections left, legend right */
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 6; background: var(--paper); border-bottom: 1px solid var(--rule); }
+.bar .wrap { display: flex; align-items: center; gap: 6px 8px; min-height: var(--bar-h); }
+.sections { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 20px), transparent); display: flex; gap: 0; overflow-x: auto; scrollbar-width: none; flex: 1 1 auto; min-width: 0; margin-left: -7px; }
+.sections::-webkit-scrollbar { display: none; }
+.sections a { white-space: nowrap; text-decoration: none; font-size: 12.5px; font-weight: 500; padding: 6px 7px; border-radius: 6px; color: var(--ink-soft); }
+.sections a:hover, .sections a:focus-visible { color: var(--ink); background: var(--plain-bg); outline: none; }
+.sections .skip { white-space: nowrap; font-size: 12.5px; padding: 6px 7px; color: var(--ink-soft); opacity: .7; }
+.sections a[aria-current="true"] { color: var(--ink); box-shadow: inset 0 -2px 0 var(--card-line); border-radius: 6px 6px 0 0; }
+.legend { display: flex; gap: 5px; flex: 0 0 auto; align-items: center; }
+.legend .chip { font: inherit; font-size: 12px; font-weight: 500; color: var(--ink); background: none; border: 1px solid var(--rule); border-radius: 999px; padding: 3px 9px 3px 6px; display: inline-flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap; }
+.legend .sw { font-family: var(--font-text); font-size: 15px; line-height: 1.2; padding: 0 3px; text-underline-offset: 3px; }
+.legend.filtering .chip:not([aria-pressed="true"]) { opacity: .6; }
+.legend .chip[aria-pressed="true"]::after { content: "\00d7"; margin-left: 1px; font-weight: 600; opacity: .7; }
+.legend .chip.lit { border-color: var(--chip-s); }
+.legend .chip:hover, .legend .chip:focus-visible { border-color: var(--rule); background: var(--card-bg); outline: none; }
+.legend .chip[aria-pressed="true"] { border-color: var(--chip-s); background: var(--chip-h); }
+.chip[data-role="thesis"] { --chip-h: var(--h-thesis); --chip-s: var(--s-thesis); }
+.chip[data-role="concept"] { --chip-h: var(--h-concept); --chip-s: var(--s-concept); }
+.chip[data-role="evidence"] { --chip-h: var(--h-evidence); --chip-s: var(--s-evidence); }
+.chip[data-role="concession"] { --chip-h: var(--h-concession); --chip-s: var(--s-concession); }
+.chip[data-role="method"] { --chip-h: var(--h-method); --chip-s: var(--s-method); }
+
+main { padding-block: 8px 48px; display: grid; gap: 28px; }
+h2 { font-family: var(--font-text); font-size: 30px; font-weight: 600; letter-spacing: -.01em; padding-bottom: 9px; border-bottom: 1px solid var(--plain-line); margin-top: 44px; scroll-margin-top: calc(var(--bar-h) + 20px); display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+h3.sub { font-size: 19px; font-weight: 600; margin-top: 18px; padding-top: 22px; border-top: 1px solid var(--rule); scroll-margin-top: calc(var(--bar-h) + 16px); }
+h2 + h3.sub { border-top: 0; padding-top: 0; margin-top: 0; }
+h2 small { font-family: var(--font-ui); font-weight: 400; color: var(--ink-soft); font-size: 13px; letter-spacing: 0; }
+
+/* One paragraph = one row */
+.para + .para { border-top: 1px solid var(--rule); padding-top: 28px; }
+.para { display: grid; grid-template-columns: minmax(0, 680px) minmax(0, 400px); justify-content: space-between; gap: 16px 56px; align-items: start; scroll-margin-top: calc(var(--bar-h) + 16px); }
+.left { min-width: 0; display: grid; gap: 14px; }
+.pid { font-family: var(--font-ui); font-size: 14px; color: var(--ink); font-weight: 600; display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
+.pid b { color: var(--ink); font-weight: 600; background: var(--plain-bg); border: 1px solid var(--rule); border-radius: 4px; padding: 0 6px; font-size: 11.5px; letter-spacing: .04em; color: var(--ink-soft); }
+.orig { font-family: var(--font-text); font-size: 17px; line-height: 1.72; }
+.orig p { margin: 0 0 .75em; }
+.orig p:last-child { margin-bottom: 0; }
+.plain { background: var(--plain-bg); border-left: 3px solid var(--plain-line); padding: 13px 18px 14px; font-size: 15px; line-height: 1.62; }
+.plain p { margin: 0 0 .6em; }
+.plain p:last-child { margin-bottom: 0; }
+.tag { font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; display: block; margin-bottom: 5px; }
+
+.note { background: var(--card-bg); border: 1px solid var(--rule); border-left: 3px solid var(--card-line); padding: 4px 18px; font-size: 14px; line-height: 1.55; min-width: 0; margin-top: 0; position: sticky; top: calc(var(--bar-h) + 16px); }
+.note dl { margin: 0; }
+.note dt { padding-top: 13px; }
+.note dd { padding-bottom: 13px; }
+.note dd + dt { border-top: 1px solid var(--rule); }
+.note dd p { margin: 0 0 8px; }
+.note dd p:last-child { margin-bottom: 0; }
+.pill { display: inline-block; font-size: 10.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; padding: 0 6px; border-radius: 3px; margin-right: 4px; line-height: 1.6; vertical-align: 1px; }
+.pill { box-shadow: inset 0 0 0 1px currentColor; }
+.pill.gap { color: var(--ink); box-shadow: inset 0 0 0 1.5px currentColor; }
+.pill.tech { color: var(--ink-soft); }
+a.pref { white-space: nowrap; }
+.note a:hover, .plain a:hover, .orig a:hover, .tile a:hover, .core a:hover, a:focus-visible { text-decoration-color: currentColor; outline: none; }
+.note dt { font-weight: 600; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 4px; }
+.note dd { margin: 0; }
+.note a, .plain a, .orig a, figcaption a, .tile a, .core a { color: var(--link); text-decoration: underline solid 1px; text-decoration-color: color-mix(in srgb, var(--link) 45%, transparent); text-underline-offset: 3px; }
+.note a:hover, .plain a:hover, .orig a:hover, .tile a:hover, .core a:hover { text-decoration-color: currentColor; }
+
+/* Highlights: color in the text, the name on hover or focus */
+mark, .sw { color: inherit; padding: .04em 0; border-radius: 2px; position: relative; -webkit-box-decoration-break: clone; box-decoration-break: clone; text-decoration-line: underline; text-decoration-color: var(--s); text-decoration-thickness: 2px; text-underline-offset: 4px; text-decoration-skip-ink: none; transition: background-color .15s; }
+mark { cursor: help; }
+.h-thesis { background-color: var(--h-thesis); --s: var(--s-thesis); text-decoration-style: solid; text-decoration-thickness: 3px; }
+.h-concept { background-color: var(--h-concept); --s: var(--s-concept); text-decoration-style: dotted; }
+.h-evidence { background-color: var(--h-evidence); --s: var(--s-evidence); text-decoration-style: double; text-decoration-thickness: 1px; }
+.h-concession { background-color: var(--h-concession); --s: var(--s-concession); text-decoration-style: wavy; text-decoration-thickness: 1.5px; }
+.h-method { background-color: var(--h-method); --s: var(--s-method); text-decoration-style: dashed; }
+mark::before { position: absolute; left: 0; top: -13px; z-index: 4; font-family: var(--font-ui); font-size: 9.5px; line-height: 13px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; white-space: nowrap; padding: 0 6px 0 5px; border-radius: 2px 2px 2px 0; background: var(--ink); color: var(--paper); border-left: 3px solid var(--s); opacity: 0; transition: opacity .12s; pointer-events: none; }
+mark.h-thesis::before { content: "Thesis"; }
+mark.h-concept::before { content: "Concept"; }
+mark.h-evidence::before { content: "Evidence"; }
+mark.h-concession::before { content: "Concession"; }
+mark.h-method::before { content: "Method"; }
+mark:hover, mark:focus-visible { outline: none; background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+mark:hover::before, mark:focus-visible::before { opacity: 1; }
+main[data-focus] mark { background-color: transparent; text-decoration-color: transparent; cursor: text; }
+main[data-focus] mark:hover { background-image: none; }
+main[data-focus] mark:hover::before { opacity: 0; }
+main[data-focus="thesis"] .h-thesis { background-color: var(--h-thesis); text-decoration-color: var(--s); cursor: help; }
+main[data-focus="thesis"] .h-thesis:hover { background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+main[data-focus="thesis"] .h-thesis:hover::before { opacity: 1; }
+main[data-focus="concept"] .h-concept { background-color: var(--h-concept); text-decoration-color: var(--s); cursor: help; }
+main[data-focus="concept"] .h-concept:hover { background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+main[data-focus="concept"] .h-concept:hover::before { opacity: 1; }
+main[data-focus="evidence"] .h-evidence { background-color: var(--h-evidence); text-decoration-color: var(--s); cursor: help; }
+main[data-focus="evidence"] .h-evidence:hover { background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+main[data-focus="evidence"] .h-evidence:hover::before { opacity: 1; }
+main[data-focus="concession"] .h-concession { background-color: var(--h-concession); text-decoration-color: var(--s); cursor: help; }
+main[data-focus="concession"] .h-concession:hover { background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+main[data-focus="concession"] .h-concession:hover::before { opacity: 1; }
+main[data-focus="method"] .h-method { background-color: var(--h-method); text-decoration-color: var(--s); cursor: help; }
+main[data-focus="method"] .h-method:hover { background-image: linear-gradient(color-mix(in srgb, var(--s) 22%, transparent), color-mix(in srgb, var(--s) 22%, transparent)); }
+main[data-focus="method"] .h-method:hover::before { opacity: 1; }
+
+/* Figures and tables */
+.fig { margin: 0; display: grid; gap: 10px; }
+.fig .img-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: var(--fig-bg); }
+.fig .open { white-space: nowrap; margin-left: 6px; }
+.fig img { display: block; width: 100%; height: auto; padding: 10px; }
+.fig figcaption, .tbl caption { font-size: 13px; line-height: 1.5; color: var(--ink-soft); max-width: 680px; text-align: left; }
+.fig figcaption b, .tbl caption b { color: var(--ink); font-weight: 600; }
+.fig.narrow { max-width: 680px; }
+.fig.mid { max-width: 900px; }
+.fig.mid figcaption { max-width: none; }
+.tbl-scroll { overflow-x: auto; border: 1px solid var(--rule); border-radius: 4px; background: linear-gradient(to right, var(--card-bg) 30%, transparent) left / 40px 100% no-repeat local, linear-gradient(to left, var(--card-bg) 30%, transparent) right / 40px 100% no-repeat local, linear-gradient(to right, rgba(0,0,0,.16), transparent) left / 12px 100% no-repeat scroll, linear-gradient(to left, rgba(0,0,0,.16), transparent) right / 12px 100% no-repeat scroll, var(--card-bg); }
+.tbl { border-collapse: collapse; width: 100%; font-size: 13px; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.tbl-cap { font-size: 13px; line-height: 1.5; color: var(--ink-soft); margin: 0; }
+.tbl-cap b { color: var(--ink); font-weight: 600; }
+.tbl td:first-child, .tbl thead th:first-child { position: sticky; left: 0; background: var(--card-bg); }
+.tbl tr.ours td:first-child { background: var(--ours); }
+.tbl .gs { padding-left: 26px; }
+.tbl thead tr.g th[colspan] span, .tbl thead tr.g th.one span { display: block; border-bottom: 1px solid var(--ink-soft); padding-bottom: 3px; }
+.tbl caption { caption-side: top; padding: 10px 12px 8px; }
+.tbl th, .tbl td { padding: 5px 10px; text-align: right; white-space: nowrap; }
+.tbl th:first-child, .tbl td:first-child { text-align: left; }
+.tbl thead th { font-weight: 600; font-size: 12px; color: var(--ink-soft); border-bottom: 1px solid var(--rule); border-top: 1px solid var(--rule); vertical-align: bottom; }
+.tbl thead tr.g th { border-bottom: 0; padding-bottom: 1px; color: var(--ink); }
+.tbl thead tr.g th[colspan] { text-align: center; }
+.tbl thead tr.g + tr th { border-top: 0; padding-top: 1px; }
+.tbl tr.grp td { font-weight: 600; font-size: 11px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); padding-top: 10px; border-top: 1px solid var(--rule); text-align: left; }
+.tbl tr.ours td { background: var(--ours); font-weight: 600; }
+.tbl td b { font-weight: 700; }
+.tbl tbody tr:not(.grp) + tr:not(.grp) td { border-top: 1px solid color-mix(in srgb, var(--rule) 70%, transparent); }
+.tbl tbody tr:not(.grp):hover td { background: var(--plain-bg); }
+.tbl .dim { color: var(--ink-soft); }
+.tbl-grid { display: grid; align-items: stretch; grid-template-columns: repeat(auto-fit, minmax(165px, 1fr)); gap: 10px; }
+.tbl-grid .tbl caption { padding: 8px 10px 6px; }
+.plain mjx-container, .note mjx-container { font-size: 96% !important; }
+code { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: .84em; background: color-mix(in srgb, var(--ink) 7%, transparent); border-radius: 3px; padding: .08em .3em; }
+mark code { background: transparent; padding: 0; text-decoration: inherit; }
+mjx-container { overflow-x: auto; overflow-y: hidden; max-width: 100%; }
+mjx-container[display="true"] { margin: .7em 0 !important; }
+
+/* Argument map */
+.map { padding-block: 0 72px; display: grid; gap: 14px; }
+.orig a { color: var(--card-line); text-decoration: none; }
+.orig a:hover, .orig a:focus-visible { text-decoration: underline solid 1px; }
+.para:target .pid b, h3.sub:target { outline: 2px solid var(--card-line); outline-offset: 2px; }
+.map h3 { font-size: 11.5px; font-weight: 600; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-soft); margin-top: 22px; margin-bottom: -4px; }
+.tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; counter-reset: step; }
+.tiles .tile b.h::before { counter-increment: step; content: counter(step); display: inline-block; min-width: 1.5em; color: var(--ink-soft); font-weight: 600; }
+.tile { border: 1px solid var(--rule); border-top: 3px solid var(--navy); background: var(--card-bg); padding: 14px 16px 16px; font-size: 14px; line-height: 1.55; }
+.tile b.h { display: block; margin-bottom: 5px; font-size: 14px; }
+.tile.t-claim { border-top-color: var(--s-thesis); } .tile.t-method { border-top-color: var(--s-method); } .tile.t-evidence { border-top-color: var(--s-evidence); } .tile.t-objection { border-top-color: var(--s-concession); }
+.core { font-family: var(--font-text); font-size: 19px; line-height: 1.55; margin: 0; background: var(--card-bg); border: 1px solid var(--rule); border-left: 4px solid var(--s-thesis); padding: 20px 24px; }
+.core span { display: block; max-width: 48em; text-wrap: pretty; }
+.pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+.pair .tile { font-size: 14px; line-height: 1.58; padding: 14px 16px 16px; }
+.pair .tile { border-top-color: var(--ink); }
+
+@media (max-width: 1000px) {
+  .bar .wrap { flex-wrap: wrap; padding-block: 4px; gap: 0; }
+  .sections { flex: 1 1 100%; -webkit-mask-image: linear-gradient(to right, #000 88%, transparent); mask-image: linear-gradient(to right, #000 88%, transparent); padding-right: 24px; }
+  .legend { flex: 1 1 100%; overflow-x: auto; scrollbar-width: none; margin-left: -6px; padding-bottom: 4px; }
+  .legend::-webkit-scrollbar { display: none; }
+  :root { --bar-h: 84px; }
+}
+@media (max-width: 900px) {
+  .para { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .note { margin-top: 0; position: static; }
+  .tiles { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .core { font-size: 17px; padding: 14px 16px; }
+  .orig { font-size: 16.5px; }
+  .fig .open { display: block; margin: 4px 0 0; }
+  .legend .chip { min-height: 30px; }
+  .legend .chip { padding: 3px 7px 3px 5px; gap: 4px; font-size: 11.5px; flex: 0 0 auto; }
+  .legend .sw { font-size: 12.5px; padding: 0 2px; }
+  .legend { gap: 5px; -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 24px), transparent); padding-right: 20px; }
+  .band .wrap { padding-block: 22px 20px; }
+  h2 { margin-top: 22px; }
+}
+@media (prefers-reduced-motion: reduce) { mark, mark::before { transition: none; } }
+</style>
+<header class="band">
+  <div class="wrap">
+    <h1>Paper title as printed</h1>
+    <!-- Line 1: authors. Line 2: venue, then links to the paper and the optional project page, two spaces apart, no dots. Nothing else. -->
+    <div class="meta">
+      <div class="authors">First Author, Second Author, Third Author</div>
+      <div class="links"><span class="venue">Venue Year</span><a href="https://arxiv.org/abs/0000.00000">arXiv:0000.00000</a><a href="https://example.org/">Project page</a></div>
+    </div>
+  </div>
+</header>
+
+<div class="bar">
+  <div class="wrap">
+    <!-- Only the sections that are on the page. Keep the paper's own section numbers. -->
+    <nav class="sections" aria-label="Sections">
+      <a href="#s0">Abstract</a>
+      <a href="#s1">1 Introduction</a>
+      <a href="#s3">3 Method</a>
+      <a href="#map">Argument map</a>
+    </nav>
+    <div class="legend" role="group" aria-label="Highlight colors. Select one to show only that role.">
+      <button class="chip" type="button" data-role="thesis" aria-pressed="false"><span class="sw h-thesis" aria-hidden="true">Aa</span>Thesis</button>
+      <button class="chip" type="button" data-role="concept" aria-pressed="false"><span class="sw h-concept" aria-hidden="true">Aa</span>Concept</button>
+      <button class="chip" type="button" data-role="evidence" aria-pressed="false"><span class="sw h-evidence" aria-hidden="true">Aa</span>Evidence</button>
+      <button class="chip" type="button" data-role="concession" aria-pressed="false"><span class="sw h-concession" aria-hidden="true">Aa</span>Concession</button>
+      <button class="chip" type="button" data-role="method" aria-pressed="false"><span class="sw h-method" aria-hidden="true">Aa</span>Method</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+  <h2 id="s0">Abstract</h2>
+
+  <article class="para" id="p1">
+    <div class="left">
+      <div class="orig">
+        <span class="pid"><b>P1</b></span>
+        <p>Original sentence with a <mark class="h-concept">defined term</mark> and the <mark class="h-thesis">claim the paper defends</mark>. A number such as <mark class="h-evidence">62.2 Acc@25 on ScanRefer</mark> is evidence. <mark class="h-method">We replace X with Y</mark> is method. <mark class="h-concession">Among LMM-based models</mark> is a scope restriction. See <a href="#fig1">Figure 1</a> and <a href="#tbl1">Table 1</a>. Inline math reads \(f_i \in \mathbb{R}^{D}\), and a token name reads <code>&lt;REF&gt;</code>.</p>
+      </div>
+      <div class="plain">
+        <span class="tag">Plain English</span>
+        <p>The restatement in ASD-STE100 style. One idea per sentence. Keep every number and every hedge.</p>
+      </div>
+    </div>
+    <aside class="note">
+      <dl>
+        <dt>Function</dt><dd>States the claim: what the paper says fixes the problem.</dd>
+        <dt>Role</dt><dd>Everything after P1 supports it. The evidence is in <a class="pref" href="#p20">P20</a> to <a class="pref" href="#p24">P24</a>.</dd>
+        <dt class="n-note">Note</dt><dd><p><span class="pill tech">Technique</span>The claim states its scope in the same sentence.</p><p><span class="pill gap">Gap</span>The number has no variance, and <a href="#tbl1">Table 1</a> reports one run.</p></dd>
+      </dl>
+    </aside>
+  </article>
+
+  <h2 id="s3">3 Method <small>Section 2, Related Work, is not included.</small></h2>
+
+  <!-- A subsection of the paper is a heading of its own, before any exhibit of that subsection. -->
+  <h3 class="sub" id="sub2">3.1 Subsection title as printed</h3>
+
+  <!-- A figure goes before the paragraph that first refers to it. Full width. -->
+  <figure class="fig" id="fig1">
+    <div class="img-scroll"><img src="figures/fig1-name.webp" width="1800" height="700" loading="lazy" alt="What the figure shows, in one sentence."></div>
+    <figcaption><b>Figure 1.</b> The paper's caption, or "The caption is annotated below as P2." <a class="open" href="figures/fig1-name.webp" target="_blank" rel="noopener">Open full size</a></figcaption>
+  </figure>
+
+  <!-- A table is real HTML, transcribed from the source. Never an image. -->
+  <figure class="fig narrow" id="tbl1">
+    <p class="tbl-cap"><b>Table 1.</b> The paper's caption.</p>
+    <div class="tbl-scroll"><table class="tbl">
+      <thead>
+        <tr class="g"><th></th><th colspan="2"><span>Benchmark A</span></th><th class="gs one"><span>Benchmark B</span></th></tr>
+        <tr><th>Method</th><th>Acc@25</th><th>Acc@50</th><th class="gs">EM@1</th></tr>
+      </thead>
+      <tbody>
+        <tr class="grp"><td colspan="4">Baselines</td></tr>
+        <tr><td>Baseline one</td><td>58.1</td><td>51.7</td><td class="gs"><span class="dim">–</span></td></tr>
+        <tr><td>Baseline two</td><td><b>63.5</b></td><td><b>56.4</b></td><td class="gs">50.2</td></tr>
+        <tr class="grp"><td colspan="4">This paper</td></tr>
+        <tr class="ours"><td>Model (ours)</td><td>62.8</td><td>54.7</td><td class="gs"><b>56.8</b></td></tr>
+      </tbody>
+    </table></div>
+  </figure>
+
+  <article class="para" id="p2">
+    <div class="left">
+      <div class="orig">
+        <!-- A label after the badge is only for page-made labels such as "Figure 1 caption". -->
+        <span class="pid"><b>P2</b></span>
+        <!-- The paper's run-in heading stays in the text, in bold. -->
+        <p><b>Run-in heading.</b> The paragraph text. Display math: \[ \mathcal{L} = \alpha\,\mathcal{L}_{a} + \beta\,\mathcal{L}_{b} \]</p>
+      </div>
+      <div class="plain">
+        <span class="tag">Plain English</span>
+        <p>The restatement.</p>
+      </div>
+    </div>
+    <aside class="note">
+      <dl>
+        <dt>Function</dt><dd>Describes the method.</dd>
+        <dt>Role</dt><dd>Defines what <a class="pref" href="#p1">P1</a> claims.</dd>
+        <dt class="n-note">Note</dt><dd><p><span class="pill gap">Gap</span>The loss weights are not given in the main text.</p></dd>
+      </dl>
+    </aside>
+  </article>
+</main>
+
+<section class="map wrap" id="map">
+  <h2 id="map-h">Argument map</h2>
+  <h3>Skeleton</h3>
+  <div class="tiles">
+    <div class="tile t-problem"><b class="h">Problem</b>What fails today (<a class="pref" href="#p1">P1</a>).</div>
+    <div class="tile t-claim"><b class="h">Claim</b>What fixes it.</div>
+    <div class="tile t-method"><b class="h">Method</b>The mechanism in one line.</div>
+    <div class="tile t-evidence"><b class="h">Evidence</b>The numbers that carry the claim.</div>
+    <div class="tile t-objection"><b class="h">Objections</b>What the authors concede or exclude.</div>
+    <div class="tile t-conclusion"><b class="h">Conclusion</b>The takeaway.</div>
+  </div>
+  <h3>Core claim in one sentence</h3>
+  <p class="core"><span>The thing the reader is asked to believe, with the main number and its scope.</span></p>
+  <div class="pair">
+    <div class="tile strong"><b class="h">Strongest point</b>Where evidence and claim fit best, with the paragraph or table.</div>
+    <div class="tile weak"><b class="h">Weakest point</b>Where the claim outruns the evidence, with the paragraph or table, and what would close the gap.</div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var main = document.querySelector('main');
+  document.querySelectorAll('mark').forEach(function (m) { m.tabIndex = 0; });
+  var chips = document.querySelectorAll('.legend .chip');
+  chips.forEach(function (c) {
+    c.addEventListener('click', function () {
+      var on = c.getAttribute('aria-pressed') === 'true';
+      chips.forEach(function (x) { x.setAttribute('aria-pressed', 'false'); });
+      c.parentNode.classList.toggle('filtering', !on);
+      if (on) { main.removeAttribute('data-focus'); }
+      else { c.setAttribute('aria-pressed', 'true'); main.setAttribute('data-focus', c.dataset.role); }
+    });
+  });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') { var p = document.querySelector('.legend .chip[aria-pressed="true"]'); if (p) p.click(); } });
+  var byRole = {}; chips.forEach(function (c) { byRole[c.dataset.role] = c; });
+  function roleOf(m) { var k = /h-([a-z]+)/.exec(m.className); return k && byRole[k[1]]; }
+  main.addEventListener('mouseover', function (e) { var m = e.target.closest && e.target.closest('mark'); if (m && roleOf(m)) roleOf(m).classList.add('lit'); });
+  main.addEventListener('mouseout', function (e) { var m = e.target.closest && e.target.closest('mark'); if (m && roleOf(m)) roleOf(m).classList.remove('lit'); });
+  var links = Array.prototype.slice.call(document.querySelectorAll('.sections a'));
+  var heads = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  var last = -1;
+  function spy() {
+    var y = 120, cur = 0;
+    heads.forEach(function (h, i) { if (h && h.getBoundingClientRect().top <= y) cur = i; });
+    links.forEach(function (a, i) { if (i === cur) a.setAttribute('aria-current', 'true'); else a.removeAttribute('aria-current'); });
+    if (cur !== last) { last = cur; var box = links[cur].parentNode; box.scrollLeft = links[cur].offsetLeft - (box.clientWidth - links[cur].offsetWidth) / 2; }
+  }
+  window.addEventListener('scroll', spy, { passive: true }); spy();
+})();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js" async></script>
